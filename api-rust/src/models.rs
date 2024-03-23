@@ -17,3 +17,10 @@ pub struct MicrophoneModel {
 pub struct CreateMicrophoneSchema {
     pub decibels: f32,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct Filter {
+    pub min: Option<f32>,
+    pub limit: Option<i64>,
+    pub ordered: Option<String>,
+}

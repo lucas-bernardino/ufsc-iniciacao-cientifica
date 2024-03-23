@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
+use axum::extract::Query;
+use axum::response::Response;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
-use crate::models::{CreateMicrophoneSchema, MicrophoneModel};
+use crate::models::{CreateMicrophoneSchema, Filter, MicrophoneModel};
 use crate::AppState;
 
 pub async fn get_microphone_handler(
@@ -41,4 +43,66 @@ pub async fn create_microphone_handler(
         Ok(_) => StatusCode::CREATED,
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     };
+}
+
+pub async fn get_filter_microphone_handler(
+    State(data): State<Arc<AppState>>,
+    Query(filter): Query<Filter>,
+) -> Response {
+    let Filter {
+        min,
+        limit,
+        ordered,
+    } = filter;
+
+    let min = min.unwrap_or(0.0);
+    let limit = limit.unwrap_or(std::i64::MAX);
+
+    let query = match ordered.as_deref() {
+        Some("decibels") => {
+            sqlx::query_as!(
+                MicrophoneModel,
+                "SELECT * FROM microphone WHERE decibels > $1 ORDER BY decibels DESC LIMIT $2",
+                min,
+                limit
+            )
+            .fetch_all(&data.db)
+            .await
+        }
+        Some("created_at") => {
+            sqlx::query_as!(
+                MicrophoneModel,
+                "SELECT * FROM microphone WHERE decibels > $1 ORDER BY created_at DESC LIMIT $2",
+                min,
+                limit
+            )
+            .fetch_all(&data.db)
+            .await
+        }
+        None => {
+            sqlx::query_as!(
+                MicrophoneModel,
+                "SELECT * FROM microphone WHERE decibels > $1 ORDER BY id DESC LIMIT $2",
+                min,
+                limit
+            )
+            .fetch_all(&data.db)
+            .await
+        }
+        Some(_) => {
+            return (StatusCode::UNPROCESSABLE_ENTITY, Json(serde_json::json!({"error": "query `ordered` must have either `decibels` or `created_at` as a value"}))).into_response();
+        }
+    };
+
+    match query {
+        Ok(query_result) => (StatusCode::OK, Json(query_result)).into_response(),
+        Err(_) => {
+            let err_msg = query.unwrap_err().to_string();
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": err_msg })),
+            )
+                .into_response()
+        }
+    }
 }

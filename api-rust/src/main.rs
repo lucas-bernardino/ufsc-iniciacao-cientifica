@@ -11,7 +11,9 @@ pub struct AppState {
 mod handler;
 mod models;
 
-use crate::handler::{create_microphone_handler, get_microphone_handler};
+use crate::handler::{
+    create_microphone_handler, get_filter_microphone_handler, get_microphone_handler,
+};
 
 #[tokio::main]
 async fn main() {
@@ -39,6 +41,7 @@ async fn main() {
         .route("/", get(|| async { "Hello, Rust!" }))
         .route("/create", post(create_microphone_handler))
         .route("/get", get(get_microphone_handler))
+        .route("/filter", get(get_filter_microphone_handler))
         .with_state(app_state);
 
     println!("Running on http://localhost:3000");
