@@ -2,3 +2,4 @@
 /api-typescript/build
 
 /api-rust/target
+/codigo_sensor_rust/target
