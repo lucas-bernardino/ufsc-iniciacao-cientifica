@@ -12,7 +12,7 @@ mod handler;
 mod models;
 
 use crate::handler::{
-    create_microphone_handler, get_filter_microphone_handler, get_microphone_handler,
+    create_microphone_handler, get_filter_microphone_handler, get_microphone_handler, handle_csv,
 };
 
 #[tokio::main]
@@ -42,12 +42,16 @@ async fn main() {
         .route("/create", post(create_microphone_handler))
         .route("/get", get(get_microphone_handler))
         .route("/filter", get(get_filter_microphone_handler))
+        .route("/csv", get(handle_csv))
         .with_state(app_state);
 
     println!("Running on http://localhost:3000");
 
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+
+    // axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+    //     .serve(app.into_make_service())
+    //     .await
+    //     .unwrap();
 }
