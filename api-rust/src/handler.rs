@@ -114,6 +114,19 @@ pub async fn get_filter_microphone_handler(
     }
 }
 
+fn handle_serialization(
+    filename: &'static str,
+    data: Vec<MicrophoneModel>,
+) -> Result<(), csv::Error> {
+    let mut csv_wtr = WriterBuilder::new().from_path(filename).unwrap();
+
+    for value in data.iter() {
+        csv_wtr.serialize(value)?;
+    }
+
+    Ok(())
+}
+
 pub async fn handle_csv(State(data): State<Arc<AppState>>) -> Response {
     let query = sqlx::query_as!(MicrophoneModel, "SELECT * FROM microphone")
         .fetch_all(&data.db)
@@ -127,9 +140,16 @@ pub async fn handle_csv(State(data): State<Arc<AppState>>) -> Response {
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)).into_response();
     }
 
-    let mut csv_wtr = WriterBuilder::new().from_path("data.csv").unwrap();
-
-    csv_wtr.serialize(query.unwrap()).unwrap();
+    match handle_serialization("data.csv", query.unwrap()) {
+        Ok(_) => {}
+        Err(err) => {
+            let error_response = serde_json::json!({
+                "status": "INTERNAL_SERVER_ERROR",
+                "message": format!("Something went wrong with CSV serialization: {err}")
+            });
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)).into_response();
+        }
+    }
 
     let file = tokio::fs::File::open("data.csv").await.unwrap();
 
