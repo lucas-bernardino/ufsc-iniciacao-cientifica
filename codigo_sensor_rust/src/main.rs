@@ -24,14 +24,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let port = SerialStream::open(&builder).unwrap();
     let mut ctx = rtu::attach_slave(port, slave);
 
-
-    //let server = reqwest::Client::new();
+    let server = reqwest::Client::new();
 
     let mut is_recording: bool = false;
 
     let mut ffmpeg_pid = 0;
 
     let mut file_count: u16 = 0;
+
+    match check_camera_available() {
+        Ok(_) => println!("Found camera."), 
+        Err(e) => panic!("ERROR: {e}") // TODO: Maybe create a POST method that will return the error.
+    };
 
     loop {
         let sensor_data = ctx.read_holding_registers(0x00, 2).await?;
@@ -47,10 +51,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Current decibels: {decibels_value}");
 
         if decibels_value > MIN_DECIBEL && !is_recording {
-            // let start_recording_result = start_recording(&mut file_count);
             match start_recording(&mut file_count) {
                 Ok(pid) => {ffmpeg_pid = pid},
-                Err(err) => println!("ERROR: could not start recording\n{err}") // TODO: Maybe create a POST method that will return the error.
+                Err(err) => panic!("ERROR: could not start recording\n{err}") // TODO: Maybe create a POST method that will return the error.
             };
             is_recording = true;
         }
@@ -62,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     is_recording = false;
                 },
                 Err(err) => {
-                    println!("ERROR: could not stop recording\n{err}"); // TODO: Maybe create a POST method that will return the error.
+                    panic!("ERROR: could not stop recording\n{err}"); // TODO: Maybe create a POST method that will return the error.
                 } 
             };
             
@@ -70,6 +73,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         
     }
 
+    Ok(())
+}
+
+fn check_camera_available() -> Result<(), Box<dyn std::error::Error>> {
+    
+    let v4l2_command = Command::new("v4l2-ctl")
+        .arg("--list-devices")
+        .output()?;
+
+    let output = String::from_utf8(v4l2_command.stderr)?;
+
+    if output.len() != 0 {
+        return Err(output.into());
+    }
+    
     Ok(())
 }
 
