@@ -1,4 +1,4 @@
-
+use std::process::{Command, Stdio};
 use serde::{Deserialize, Serialize};
 
 
@@ -7,6 +7,8 @@ struct Body {
     decibels: u16
 }
 
+const MIN_DECIBEL: u16 = 700;
+const MIN_DECIBEL_STOP: u16 = 620;
 
 #[tokio::main(flavor = "current_thread")]
 #[allow(unreachable_code)]
@@ -23,7 +25,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut ctx = rtu::attach_slave(port, slave);
 
 
-    let server = reqwest::Client::new();
+    //let server = reqwest::Client::new();
+
+    let mut is_recording: bool = false;
+
+    let mut ffmpeg_pid = 0;
+
+    let mut file_count: u16 = 0;
 
     loop {
         let sensor_data = ctx.read_holding_registers(0x00, 2).await?;
@@ -35,9 +43,60 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .json(&body)
             .send()
             .await?;
+
+        println!("Current decibels: {decibels_value}");
+
+        if decibels_value > MIN_DECIBEL && !is_recording {
+            // let start_recording_result = start_recording(&mut file_count);
+            match start_recording(&mut file_count) {
+                Ok(pid) => {ffmpeg_pid = pid},
+                Err(err) => println!("ERROR: could not start recording\n{err}") // TODO: Maybe create a POST method that will return the error.
+            };
+            is_recording = true;
+        }
+
+        if decibels_value < MIN_DECIBEL_STOP && is_recording {
+            match stop_recording(ffmpeg_pid) {
+                Ok(_) => {
+                    println!("Stopped recording ffmpeg with PID: {ffmpeg_pid}");
+                    is_recording = false;
+                },
+                Err(err) => {
+                    println!("ERROR: could not stop recording\n{err}"); // TODO: Maybe create a POST method that will return the error.
+                } 
+            };
+            
+        }
         
-        println!("Printing res: {res:#?}");
     }
 
     Ok(())
+}
+
+fn start_recording(count: &mut u16) -> Result<u32, Box<dyn std::error::Error>>  {
+    
+    let format_count = format!("out{}.mkv", count);
+
+    let ffmpeg_command = Command::new("ffmpeg")
+        .args(["-f", "v4l2", "-framerate", "30", "-video_size", "1280x720", "-input_format", "mjpeg", "-i", "/dev/video0", "-c", "copy", &format_count])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .stdin(Stdio::null())
+        .spawn();
+
+    let id = ffmpeg_command?.id();
+
+    *count += 1;
+
+    Ok(id)
+}
+
+fn stop_recording(ffmpeg_pid: u32) -> Result<(), Box<dyn std::error::Error>> {
+
+    Command::new("kill")
+        .arg(format!("{}", ffmpeg_pid))
+        .spawn()?;
+
+    Ok(())
+    
 }
