@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axum::{routing::get, routing::post, Router};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use tower_http::cors::{Any, CorsLayer};
 
 pub struct AppState {
     db: Pool<Postgres>,
@@ -13,6 +14,7 @@ mod models;
 
 use crate::handler::{
     create_microphone_handler, get_filter_microphone_handler, get_microphone_handler, handle_csv,
+    handle_download,
 };
 
 #[tokio::main]
@@ -37,12 +39,15 @@ async fn main() {
 
     let app_state = Arc::new(AppState { db: pool.clone() });
 
+    // let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any);
+
     let app = Router::new()
         .route("/", get(|| async { "Hello, Rust!" }))
         .route("/create", post(create_microphone_handler))
         .route("/get", get(get_microphone_handler))
         .route("/filter", get(get_filter_microphone_handler))
         .route("/csv", get(handle_csv))
+        .route("/video", post(handle_download))
         .with_state(app_state);
 
     println!("Running on http://localhost:3000");

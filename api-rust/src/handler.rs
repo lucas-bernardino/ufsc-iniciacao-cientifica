@@ -1,15 +1,18 @@
-use std::fs;
-use std::sync::Arc;
-
 use axum::body::Body;
-use axum::extract::Query;
+use axum::extract::{Query, Request};
 use axum::http::header;
 use axum::response::Response;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use csv::{Writer, WriterBuilder};
+use http_body_util::BodyStream;
+use std::fs;
+use std::io::{BufWriter, Write};
+use std::sync::Arc;
+use tokio::io::AsyncWriteExt;
+use tokio_stream::StreamExt;
 use tower_http::services::ServeFile;
 
-use tokio_util::io::ReaderStream;
+use tokio_util::io::{ReaderStream, StreamReader};
 
 use crate::models::{CreateMicrophoneSchema, Filter, MicrophoneModel};
 use crate::AppState;
@@ -163,4 +166,23 @@ pub async fn handle_csv(State(data): State<Arc<AppState>>) -> Response {
     ];
 
     (headers, body).into_response()
+}
+
+pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) -> Response {
+    println!("We're inside handle_download");
+
+    println!("Response is: {req:#?}");
+
+    let mut file = tokio::fs::File::create("musica.mkv").await.unwrap();
+
+    let stream = req.into_body().into_data_stream();
+
+    let stream = stream
+        .map(|result| result.map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err)));
+
+    let mut body_stream = StreamReader::new(stream);
+
+    tokio::io::copy(&mut body_stream, &mut file).await.unwrap();
+
+    "".into_response()
 }
