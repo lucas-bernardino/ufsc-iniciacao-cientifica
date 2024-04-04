@@ -1,12 +1,16 @@
 use std::sync::Arc;
 
+use tokio::sync::Mutex;
+
 use axum::{routing::get, routing::post, Router};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::cors::{Any, CorsLayer};
 
+#[derive(Clone)]
 pub struct AppState {
     db: Pool<Postgres>,
+    file_count: Arc<Mutex<u16>>
 }
 
 mod handler;
@@ -14,7 +18,7 @@ mod models;
 
 use crate::handler::{
     create_microphone_handler, get_filter_microphone_handler, get_microphone_handler, handle_csv,
-    handle_download, get_Video, delete_data
+    handle_download, get_video, delete_data
 };
 
 #[tokio::main]
@@ -37,9 +41,7 @@ async fn main() {
         }
     };
 
-    let app_state = Arc::new(AppState { db: pool.clone() });
-
-    // let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any);
+    let app_state = Arc::new(AppState { db: pool.clone(), file_count: Arc::new(Mutex::new(0)) });
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, Rust!" }))
@@ -48,7 +50,7 @@ async fn main() {
         .route("/filter", get(get_filter_microphone_handler))
         .route("/csv", get(handle_csv))
         .route("/video", post(handle_download))
-        .route("/video", get(get_video))
+        .route("/download", get(get_video))
         .route("/delete", get(delete_data))
         .with_state(app_state);
 
@@ -57,8 +59,4 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 
-    // axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-    //     .serve(app.into_make_service())
-    //     .await
-    //     .unwrap();
 }

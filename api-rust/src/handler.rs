@@ -7,7 +7,7 @@ use csv::{Writer, WriterBuilder};
 use http_body_util::BodyStream;
 use std::fs;
 use std::io::{BufWriter, Write};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tokio::io::AsyncWriteExt;
 use tokio_stream::StreamExt;
 use tower_http::services::ServeFile;
@@ -16,6 +16,8 @@ use tokio_util::io::{ReaderStream, StreamReader};
 
 use crate::models::{CreateMicrophoneSchema, Filter, MicrophoneModel};
 use crate::AppState;
+
+use axum::debug_handler;
 
 pub async fn get_microphone_handler(
     State(data): State<Arc<AppState>>,
@@ -169,12 +171,13 @@ pub async fn handle_csv(State(data): State<Arc<AppState>>) -> Response {
 }
 
 pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) -> Response {
-    println!("We're inside handle_download");
 
-    println!("Response is: {req:#?}");
+    let mut file_count = data.file_count.lock().await;
 
-    let mut file = tokio::fs::File::create("musica.mkv").await.unwrap();
+    let mut file = tokio::fs::File::create(format!("video{}.mkv", file_count)).await.unwrap();
 
+    *file_count += 1;
+    
     let stream = req.into_body().into_data_stream();
 
     let stream = stream
@@ -187,9 +190,12 @@ pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) ->
     "".into_response()
 }
 
+#[debug_handler]
 pub async fn get_video(State(data): State<Arc<AppState>>) -> Response {
 
-    let file = tokio::fs::File::open("video.mkv").await.unwrap();
+    let file_count = data.file_count.lock().await;
+    
+    let file = tokio::fs::File::open(format!("video{}.mkv", file_count)).await.unwrap();
 
     let stream = ReaderStream::new(file);
 
@@ -207,11 +213,9 @@ pub async fn delete_data(State(data): State<Arc<AppState>>) -> Response {
     let query = sqlx::query!("TRUNCATE microphone")
     .fetch_one(&data.db)
     .await;
-
+ 
     match query {
         Ok(_) => "Successfully deleted all data".into_response(),
         Err(err) => format!("Error found: {}", err).into_response(),
     }
-
-
 }
