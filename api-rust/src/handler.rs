@@ -186,3 +186,32 @@ pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) ->
 
     "".into_response()
 }
+
+pub async fn get_video(State(data): State<Arc<AppState>>) -> Response {
+
+    let file = tokio::fs::File::open("video.mkv").await.unwrap();
+
+    let stream = ReaderStream::new(file);
+
+    let body = Body::from_stream(stream);
+
+    let headers = [
+        (header::CONTENT_TYPE, "video/webm"),
+        (header::CONTENT_DISPOSITION, "attachment; filename=video.mkv"),
+    ];
+
+    (headers, body).into_response()
+}
+
+pub async fn delete_data(State(data): State<Arc<AppState>>) -> Response {
+    let query = sqlx::query!("TRUNCATE microphone")
+    .fetch_one(&data.db)
+    .await;
+
+    match query {
+        Ok(_) => "Successfully deleted all data".into_response(),
+        Err(err) => format!("Error found: {}", err).into_response(),
+    }
+
+
+}
