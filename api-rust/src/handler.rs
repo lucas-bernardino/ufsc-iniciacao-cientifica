@@ -172,12 +172,11 @@ pub async fn handle_csv(State(data): State<Arc<AppState>>) -> Response {
 
 pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) -> Response {
 
-    let mut file_count = data.file_count.lock().await;
+    let file_count = data.file_count.lock().await;
 
     let mut file = tokio::fs::File::create(format!("video{}.mkv", file_count)).await.unwrap();
 
-    *file_count += 1;
-    
+
     let stream = req.into_body().into_data_stream();
 
     let stream = stream
@@ -193,8 +192,10 @@ pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) ->
 #[debug_handler]
 pub async fn get_video(State(data): State<Arc<AppState>>) -> Response {
 
-    let file_count = data.file_count.lock().await;
-    
+    let mut file_count = data.file_count.lock().await;
+
+    println!("File count: {file_count}");
+
     let file = tokio::fs::File::open(format!("video{}.mkv", file_count)).await.unwrap();
 
     let stream = ReaderStream::new(file);
@@ -206,6 +207,8 @@ pub async fn get_video(State(data): State<Arc<AppState>>) -> Response {
         (header::CONTENT_DISPOSITION, "attachment; filename=video.mkv"),
     ];
 
+    *file_count += 1;
+
     (headers, body).into_response()
 }
 
@@ -213,7 +216,7 @@ pub async fn delete_data(State(data): State<Arc<AppState>>) -> Response {
     let query = sqlx::query!("TRUNCATE microphone")
     .fetch_one(&data.db)
     .await;
- 
+
     match query {
         Ok(_) => "Successfully deleted all data".into_response(),
         Err(err) => format!("Error found: {}", err).into_response(),
