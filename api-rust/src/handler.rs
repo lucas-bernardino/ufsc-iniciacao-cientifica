@@ -15,7 +15,7 @@ use tower_http::services::ServeFile;
 
 use tokio_util::io::{ReaderStream, StreamReader};
 
-use crate::models::{CreateMicrophoneSchema, Filter, MicrophoneModel};
+use crate::models::{CreateMicrophoneSchema, Filter, MicrophoneModel, VideoInfo};
 use crate::AppState;
 
 use axum::debug_handler;
@@ -228,13 +228,6 @@ pub async fn delete_data(State(data): State<Arc<AppState>>) -> Response {
     }
 }
 
-#[derive(Debug)]
-struct foo {
-    name: String,
-    duration: String,
-    size: String,
-}
-
 pub async fn list_videos(State(data): State<Arc<AppState>>) -> Response {
     let ls = Command::new("ls")
         .arg("-lh")
@@ -253,9 +246,9 @@ pub async fn list_videos(State(data): State<Arc<AppState>>) -> Response {
 
     let video_names_string = String::from_utf8(grep.stdout).unwrap();
 
-    let mut foo_vec: Vec<foo> = Vec::new();
+    let mut foo_vec: Vec<VideoInfo> = Vec::new();
 
-    let _ = video_names_string
+    video_names_string
         .lines()
         .map(|line| line.split_whitespace().last().unwrap())
         .for_each(|name| {
@@ -283,17 +276,21 @@ pub async fn list_videos(State(data): State<Arc<AppState>>) -> Response {
                 .unwrap();
 
             let ffprobe_output = String::from_utf8(ffprobe.stdout).unwrap();
-            let duration = ffprobe_output.lines().nth(1).unwrap();
+            let duration = ffprobe_output
+                .lines()
+                .nth(1)
+                .unwrap()
+                .replace("duration=", "");
 
             let du_output = String::from_utf8(du.stdout).unwrap();
-            let size = du_output.split_whitespace().nth(0).unwrap();
+            let size = du_output.split_whitespace().next().unwrap();
 
-            foo_vec.push(foo {
+            foo_vec.push(VideoInfo {
                 name: name.to_string(),
                 duration: duration.to_string(),
                 size: size.to_string(),
             });
         });
 
-    format!("{foo_vec:#?}").into_response()
+    Json(serde_json::json!(foo_vec)).into_response()
 }

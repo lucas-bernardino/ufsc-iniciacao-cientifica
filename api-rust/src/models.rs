@@ -24,3 +24,10 @@ pub struct Filter {
     pub limit: Option<i64>,
     pub ordered: Option<String>,
 }
+
+#[derive(Serialize)]
+pub struct VideoInfo {
+    pub name: String,
+    pub duration: String,
+    pub size: String,
+}
