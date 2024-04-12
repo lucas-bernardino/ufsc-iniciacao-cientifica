@@ -7,6 +7,7 @@ use csv::{Writer, WriterBuilder};
 use http_body_util::BodyStream;
 use std::fs;
 use std::io::{BufWriter, Write};
+use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use tokio::io::AsyncWriteExt;
 use tokio_stream::StreamExt;
@@ -171,11 +172,11 @@ pub async fn handle_csv(State(data): State<Arc<AppState>>) -> Response {
 }
 
 pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) -> Response {
-
     let file_count = data.file_count.lock().await;
 
-    let mut file = tokio::fs::File::create(format!("video{}.mkv", file_count)).await.unwrap();
-
+    let mut file = tokio::fs::File::create(format!("video{}.mkv", file_count))
+        .await
+        .unwrap();
 
     let stream = req.into_body().into_data_stream();
 
@@ -191,12 +192,13 @@ pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) ->
 
 #[debug_handler]
 pub async fn get_video(State(data): State<Arc<AppState>>) -> Response {
-
     let mut file_count = data.file_count.lock().await;
 
     println!("File count: {file_count}");
 
-    let file = tokio::fs::File::open(format!("video{}.mkv", file_count)).await.unwrap();
+    let file = tokio::fs::File::open(format!("video{}.mkv", file_count))
+        .await
+        .unwrap();
 
     let stream = ReaderStream::new(file);
 
@@ -204,7 +206,10 @@ pub async fn get_video(State(data): State<Arc<AppState>>) -> Response {
 
     let headers = [
         (header::CONTENT_TYPE, "video/webm"),
-        (header::CONTENT_DISPOSITION, "attachment; filename=video.mkv"),
+        (
+            header::CONTENT_DISPOSITION,
+            "attachment; filename=video.mkv",
+        ),
     ];
 
     *file_count += 1;
@@ -214,11 +219,81 @@ pub async fn get_video(State(data): State<Arc<AppState>>) -> Response {
 
 pub async fn delete_data(State(data): State<Arc<AppState>>) -> Response {
     let query = sqlx::query!("TRUNCATE microphone")
-    .fetch_one(&data.db)
-    .await;
+        .fetch_one(&data.db)
+        .await;
 
     match query {
         Ok(_) => "Successfully deleted all data".into_response(),
         Err(err) => format!("Error found: {}", err).into_response(),
     }
+}
+
+#[derive(Debug)]
+struct foo {
+    name: String,
+    duration: String,
+    size: String,
+}
+
+pub async fn list_videos(State(data): State<Arc<AppState>>) -> Response {
+    let ls = Command::new("ls")
+        .arg("-lh")
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    let grep = Command::new("grep")
+        .arg("mkv")
+        .stdin(Stdio::from(ls.stdout.unwrap()))
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap()
+        .wait_with_output()
+        .unwrap();
+
+    let video_names_string = String::from_utf8(grep.stdout).unwrap();
+
+    let mut foo_vec: Vec<foo> = Vec::new();
+
+    let _ = video_names_string
+        .lines()
+        .map(|line| line.split_whitespace().last().unwrap())
+        .for_each(|name| {
+            let ffprobe = Command::new("ffprobe")
+                .args([
+                    "-i",
+                    name,
+                    "-show_entries",
+                    "format=duration",
+                    "-v",
+                    "quiet",
+                ])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap()
+                .wait_with_output()
+                .unwrap();
+
+            let du = Command::new("du")
+                .args(["-h", name])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap()
+                .wait_with_output()
+                .unwrap();
+
+            let ffprobe_output = String::from_utf8(ffprobe.stdout).unwrap();
+            let duration = ffprobe_output.lines().nth(1).unwrap();
+
+            let du_output = String::from_utf8(du.stdout).unwrap();
+            let size = du_output.split_whitespace().nth(0).unwrap();
+
+            foo_vec.push(foo {
+                name: name.to_string(),
+                duration: duration.to_string(),
+                size: size.to_string(),
+            });
+        });
+
+    format!("{foo_vec:#?}").into_response()
 }

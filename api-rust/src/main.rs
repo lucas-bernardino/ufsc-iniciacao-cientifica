@@ -10,15 +10,15 @@ use tower_http::cors::{Any, CorsLayer};
 #[derive(Clone)]
 pub struct AppState {
     db: Pool<Postgres>,
-    file_count: Arc<Mutex<u16>>
+    file_count: Arc<Mutex<u16>>,
 }
 
 mod handler;
 mod models;
 
 use crate::handler::{
-    create_microphone_handler, get_filter_microphone_handler, get_microphone_handler, handle_csv,
-    handle_download, get_video, delete_data
+    create_microphone_handler, delete_data, get_filter_microphone_handler, get_microphone_handler,
+    get_video, handle_csv, handle_download, list_videos,
 };
 
 #[tokio::main]
@@ -41,7 +41,10 @@ async fn main() {
         }
     };
 
-    let app_state = Arc::new(AppState { db: pool.clone(), file_count: Arc::new(Mutex::new(0)) });
+    let app_state = Arc::new(AppState {
+        db: pool.clone(),
+        file_count: Arc::new(Mutex::new(0)),
+    });
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, Rust!" }))
@@ -52,11 +55,11 @@ async fn main() {
         .route("/video", post(handle_download))
         .route("/download", get(get_video))
         .route("/delete", get(delete_data))
+        .route("/list", get(list_videos))
         .with_state(app_state);
 
     println!("Running on http://localhost:3000");
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
-
 }
