@@ -1,5 +1,5 @@
 use axum::body::Body;
-use axum::extract::{Query, Request};
+use axum::extract::{Path, Query, Request};
 use axum::http::header;
 use axum::response::Response;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
@@ -228,7 +228,7 @@ pub async fn delete_data(State(data): State<Arc<AppState>>) -> Response {
     }
 }
 
-pub async fn list_videos(State(data): State<Arc<AppState>>) -> Response {
+pub async fn list_videos() -> Response {
     let ls = Command::new("ls")
         .arg("-lh")
         .stdout(Stdio::piped())
@@ -293,4 +293,29 @@ pub async fn list_videos(State(data): State<Arc<AppState>>) -> Response {
         });
 
     Json(serde_json::json!(foo_vec)).into_response()
+}
+
+pub async fn download_by_id(Path(id): Path<u16>) -> Response {
+    let file = tokio::fs::File::open(format!("video{id}.mkv")).await;
+
+    if file.is_err() {
+        let body = serde_json::json!({
+            "status": "BAD_REQUEST",
+            "message": "File does not exist"});
+        return (StatusCode::BAD_REQUEST, Json(body)).into_response();
+    }
+
+    let stream = ReaderStream::new(file.unwrap());
+
+    let body = Body::from_stream(stream);
+
+    let headers = [
+        (header::CONTENT_TYPE, "video/webm"),
+        (
+            header::CONTENT_DISPOSITION,
+            "attachment; filename=video.mkv",
+        ),
+    ];
+
+    (headers, body).into_response()
 }

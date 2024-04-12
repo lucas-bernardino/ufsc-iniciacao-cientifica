@@ -17,8 +17,8 @@ mod handler;
 mod models;
 
 use crate::handler::{
-    create_microphone_handler, delete_data, get_filter_microphone_handler, get_microphone_handler,
-    get_video, handle_csv, handle_download, list_videos,
+    create_microphone_handler, delete_data, download_by_id, get_filter_microphone_handler,
+    get_microphone_handler, get_video, handle_csv, handle_download, list_videos,
 };
 
 #[tokio::main]
@@ -56,6 +56,7 @@ async fn main() {
         .route("/download", get(get_video))
         .route("/delete", get(delete_data))
         .route("/list", get(list_videos))
+        .route("/download/video/:id", get(download_by_id))
         .with_state(app_state);
 
     println!("Running on http://localhost:3000");
