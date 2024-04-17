@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ui/chart.dart';
 
 /// Flutter code sample for [NavigationRail].
 
@@ -83,7 +84,11 @@ class _NavRailExampleState extends State<NavRailExample> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 if (_selectedIndex == 0)
-                  Text('Im at Gráficos'),
+                  const SizedBox(
+                      height: 600,
+                      width: 900,
+                      child: MicChart()
+                  ),
                 if (_selectedIndex == 1)
                   Text('Im at Vídeos'),
                 if (_selectedIndex == 2)
