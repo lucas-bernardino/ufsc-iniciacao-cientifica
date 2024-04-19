@@ -1,38 +1,62 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:http/http.dart' as http;
 
-class MicChart extends StatelessWidget {
+class MicChart extends StatefulWidget {
   const MicChart({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    DateTime d1 = DateTime(2005);
-    DateTime d2 = DateTime(2006);
-    DateTime d3 = DateTime(2007);
-    DateTime d4 = DateTime(2008);
-    DateTime d5 = DateTime(2009);
-    DateTime d6 = DateTime(2010);
-    DateTime d7 = DateTime(2011);
-    DateTime d8 = DateTime(2012);
-    DateTime d9 = DateTime(2013);
-    DateTime d10 = DateTime(2014);
-    DateTime d11 = DateTime(2015);
-    DateTime d12 = DateTime(2016);
-    final List<SalesData> chartData = [
-      SalesData(d1, 35),
-      SalesData(d2, 28),
-      SalesData(d3, 34),
-      SalesData(d4, 32),
-      SalesData(d5, 20),
-      SalesData(d6, 26),
-      SalesData(d7, 54),
-      SalesData(d8, 42),
-      SalesData(d9, 60),
-      SalesData(d10, 16),
-      SalesData(d11, 41),
-      SalesData(d12, 33),
+  State<MicChart> createState() => _MicChart();
+}
+
+class _MicChart extends State<MicChart> {
+
+  DateTime format(String str) {
+    int hour = str.substring(11, 13) as int;
+    int minutes = str.substring(14, 16) as int;
+    int seconds = str.substring(17, 19) as int;
+    return DateTime(2024, 04, 18, hour, minutes, seconds);
+  }
+
+  Timer? timer;
+  int count = 2024;
+  List<MicData>? chartData;
+  ChartSeriesController<MicData, int>? _chartSeriesController;
+
+  late ChartSeriesController chartSeriesController_;
+
+  @override
+  void initState() {
+    super.initState();
+    chartData = <MicData>[
+      MicData(DateTime(2010), 42),
+      MicData(DateTime(2011), 47),
+      MicData(DateTime(2012), 33),
+      MicData(DateTime(2013), 49),
+      MicData(DateTime(2014), 54),
+      MicData(DateTime(2015), 41),
     ];
+    timer = Timer.periodic(const Duration(seconds: 1), _updateDataSource);
+  }
+
+  void _updateDataSource(Timer timer) {
+    chartData!.add(MicData(DateTime(count++), count / 10));
+    if (chartData?.length == 20) {
+      chartData?.removeAt(0);
+      chartSeriesController_.updateDataSource(
+        addedDataIndexes: <int>[chartData!.length - 1],
+        removedDataIndexes: <int>[0],
+      );
+    } else {
+      chartSeriesController_.updateDataSource(
+        addedDataIndexes: <int>[chartData!.length - 1],
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
 
     return Scaffold(
         body: Center(
@@ -42,9 +66,9 @@ class MicChart extends StatelessWidget {
                       text: "Decibéis em tempo real",
                       textStyle: TextStyle(
                         color: Colors.black54,
-                          fontFamily: 'Roboto',
-                          fontStyle: FontStyle.italic,
-                          fontSize: 14,
+                        fontFamily: 'Roboto',
+                        fontStyle: FontStyle.italic,
+                        fontSize: 14,
                       ),
                     ),
                     enableAxisAnimation: true,
@@ -54,17 +78,20 @@ class MicChart extends StatelessWidget {
                       borderWidth: 2,
                       header: "foo",
                     ),
-                    primaryXAxis: DateTimeAxis(),
+                    primaryXAxis: const DateTimeAxis(),
                     series: <CartesianSeries>[
                       // Renders line chart
-                      LineSeries<SalesData, DateTime>(
-                        color: Colors.black54,
+                      LineSeries<MicData, DateTime>(
+                        onRendererCreated: (ChartSeriesController controller) {
+                          chartSeriesController_ = controller;
+                        },
+                          color: Colors.black54,
                           width: 3.5,
                           dataSource: chartData,
-                          xValueMapper: (SalesData sales, _) => sales.year,
-                          yValueMapper: (SalesData sales, _) => sales.sales,
-                        enableTooltip: true,
-                        dataLabelSettings:const DataLabelSettings(isVisible : true)
+                          xValueMapper: (MicData sales, _) => sales.date,
+                          yValueMapper: (MicData sales, _) => sales.decibels,
+                          enableTooltip: true,
+                          dataLabelSettings:const DataLabelSettings(isVisible : true)
                       )
                     ]
                 )
@@ -72,10 +99,11 @@ class MicChart extends StatelessWidget {
         )
     );
   }
+
 }
 
-class SalesData {
-  SalesData(this.year, this.sales);
-  final DateTime year;
-  final double sales;
+class MicData {
+  MicData(this.date, this.decibels);
+  final DateTime date;
+  final double decibels;
 }
