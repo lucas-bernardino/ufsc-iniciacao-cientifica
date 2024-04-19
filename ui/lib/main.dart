@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ui/chart.dart';
+import 'package:microphone_ui/chart.dart';
+import 'package:microphone_ui/filter.dart';
 
 /// Flutter code sample for [NavigationRail].
 
@@ -90,9 +91,13 @@ class _NavRailExampleState extends State<NavRailExample> {
                       child: MicChart()
                   ),
                 if (_selectedIndex == 1)
-                  Text('Im at Vídeos'),
+                  const Text('Im at Vídeos'),
                 if (_selectedIndex == 2)
-                  Text('Im at Filtros'),
+                  const SizedBox(
+                    height: 600,
+                    width: 900,
+                    child: MicFilter(),
+                  )
               ],
             ),
           ),
