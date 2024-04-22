@@ -319,3 +319,27 @@ pub async fn download_by_id(Path(id): Path<u16>) -> Response {
 
     (headers, body).into_response()
 }
+
+pub async fn last_data(State(data): State<Arc<AppState>>) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)>  {
+
+    let query = sqlx::query_as!(
+        MicrophoneModel,
+        "SELECT * FROM microphone ORDER BY created_at DESC LIMIT 1",
+    )
+    .fetch_one(&data.db)
+    .await;
+
+    if query.is_err() {
+        let error_response = serde_json::json!({
+            "status": "INTERNAL_SERVER_ERROR",
+            "message": "Something went wrong in the server."
+        });
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)));
+    }
+
+    let query_result = query.unwrap();
+
+    Ok(Json(query_result))
+
+
+}
