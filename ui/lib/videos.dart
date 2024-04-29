@@ -19,32 +19,38 @@ class Videos extends StatefulWidget {
 class _VideosState extends State<Videos> {
 
   int numberOfVideos = 0;
-  List<ListTile> listTile = [ListTile(
-      leading: CircleAvatar(child: Text('1')),
-      title: Text('Video 1'),
-      subtitle: Text('Tamanho: 11MB'),
-      trailing: IconButton(onPressed: () {downloadVideo();}, icon: const Icon(Icons.download),)
-  ), ListTile(
-      leading: CircleAvatar(child: Text('2')),
-      title: Text('Video 2'),
-      subtitle: Text('Tamanho: 14MB'),
-      trailing: IconButton(onPressed: () {print("foo");}, icon: const Icon(Icons.download),)
-  ),];
+  List<ListTile> _listTile = [];
 
-  void updateListTile() {
+  Future<void> updateListTile() async {
+    var contents = await getListOfVideos();
+    var copy = _listTile;
+    contents?.asMap().forEach((index, element) {
+      var listTile = ListTile(
+          key: Key(index.toString()),
+          leading: CircleAvatar(child: Text(index.toString())),
+          title: Text(element.name),
+          subtitle: const Text('Not Available'),
+          trailing: IconButton(onPressed: () {downloadVideo(index);}, icon: const Icon(Icons.download),)
+      );
+      if (!copy.contains(listTile)) {
+        copy.add(listTile);
+      }
+    });
+    print("I was here. Contents size: ${_listTile.length}");
     setState(() {
-      numberOfVideos = 5;
+      _listTile = copy;
     });
   }
 
 
   @override
   Widget build(BuildContext context) {
+    print("I just build");
     return Scaffold(
       body: Column(
-        children: [IconButton(onPressed: () {print("foo");}, icon: Icon(Icons.refresh)),ListView(
+        children: [IconButton(onPressed: () {updateListTile();}, icon: Icon(Icons.refresh)),ListView(
           shrinkWrap: true,
-          children: listTile,
+          children: _listTile,
         ),],
       )
     );
@@ -79,21 +85,28 @@ class VideosResponse {
   }
 }
 
-Future<void> getListOfVideos() async {
-  final response = await http.get(Uri.parse('http://150.162.216.199:3000/list'));
-  final List<dynamic> response_json = json.decode(response.body);
-  print("Response_json: ${response_json}");
+Future<List<VideosResponse>?> getListOfVideos() async {
+  try {
+    final response = await http.get(Uri.parse('http://150.162.217.224:3000/list'));
+    final List<dynamic> response_json = json.decode(response.body);
+    var content = response_json.map((elem) => VideosResponse.fromJson(elem)).toList();
+    return content;
+  } catch (e){
+    print("UNEXPECTED RESPONSE IN THE SERVER $e");
+    //TODO: Handle this parsing error that might happen when the server's response was different from expected.
+  }
+  return null;
 }
 
-Future<void> downloadVideo() async {
+Future<void> downloadVideo(int video_number) async {
   final dio = Dio();
 
   final rs = await dio.get(
-    "http://150.162.216.199:3000/download/video/1",
+    "http://150.162.217.224:3000/download/video/$video_number",
     options: Options(responseType: ResponseType.stream),
   );
 
-  final file = File('foo.mkv');
+  final file = File('video$video_number.mkv');
   final fileStream = file.openWrite();
 
   await for (final chunk in rs.data.stream) {
@@ -104,3 +117,5 @@ Future<void> downloadVideo() async {
 
   print('Video downloaded successfully!');
 }
+
+
