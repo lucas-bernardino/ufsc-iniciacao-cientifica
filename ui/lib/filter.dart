@@ -30,8 +30,8 @@ class MicResponse {
 }
 
 Future<MicResponse> fetchAlbum() async {
-  final response = await http.get(Uri.parse('http://150.162.217.35:3000/last'));
-  final response_json = json.decode(response.body); // '{"decibels":504,"createdAt":"2024-04-18T11:35:12.703293Z"}'
+  final response = await http.get(Uri.parse('http://150.162.217.69:3000/last'));
+  final response_json = json.decode(response.body);
   var foo = MicResponse.fromJson(response_json);
   print("O proximos sera bom ein");
   print('Printing response_json: $response_json');
@@ -51,7 +51,8 @@ class MicFilter extends StatefulWidget {
 
 class _MicFilterState extends State<MicFilter> {
   late Future<MicResponse> futureAlbum;
-
+  double _decibelsslidervalue = 60;
+  double _daysslidervalue = 0;
   @override
   void initState() {
     super.initState();
@@ -61,19 +62,50 @@ class _MicFilterState extends State<MicFilter> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: FutureBuilder<MicResponse>(
-          future: futureAlbum,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Text("Valor: EAE MONARK AQUI");
-              } else if (snapshot.hasError) {
-                return Text('${snapshot.error}');
-              }
-              return const CircularProgressIndicator();
-            }
-        ),
-      ),
+      body: Column(children: [
+        Column(children: [
+          Text("Valor máximo Decibéis"),
+          Slider(
+            value: _decibelsslidervalue,
+            max: 100,
+            min: 40,
+            divisions: 30,
+            label: _decibelsslidervalue.round().toString(),
+            onChanged: (double value) {
+              setState(() {
+                _decibelsslidervalue = value;
+              });
+            },
+          )
+        ],),
+        SizedBox(height: 100),
+        Column(children: [
+          Text("Dias atras"),
+          Slider(
+            value: _daysslidervalue,
+            max: 31,
+            min: 0,
+            divisions: 31,
+            label: _daysslidervalue.round().toString(),
+            onChanged: (double value) {
+              setState(() {
+                _daysslidervalue = value;
+              });
+            },
+          )
+        ],),
+        SizedBox(height: 100,),
+        Column(children: [ElevatedButton(
+          onPressed: () { print("Oba"); },
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+          child: const Row(
+            children: [
+              Icon(Icons.download),
+              Text("Download")
+            ],
+          ),
+        )],)
+      ],),
     );
   }
 }
