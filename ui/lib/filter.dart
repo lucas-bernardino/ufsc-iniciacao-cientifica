@@ -53,6 +53,10 @@ class _MicFilterState extends State<MicFilter> {
   late Future<MicResponse> futureAlbum;
   double _decibelsslidervalue = 60;
   double _daysslidervalue = 0;
+
+  bool _decibels_flag = false;
+  bool _days_flag = false;
+
   @override
   void initState() {
     super.initState();
@@ -63,8 +67,13 @@ class _MicFilterState extends State<MicFilter> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(children: [
-        Column(children: [
-          Text("Valor máximo Decibéis"),
+        Row(children: [ElevatedButton(onPressed: () => {setState(() {
+          _decibels_flag = !_decibels_flag;
+        })}, child: Text("Filtrar decibéis"))],),
+        Visibility(
+          visible: _decibels_flag,
+          child: Column(children: [
+          const Text("Valor máximo Decibéis"),
           Slider(
             value: _decibelsslidervalue,
             max: 100,
@@ -77,9 +86,12 @@ class _MicFilterState extends State<MicFilter> {
               });
             },
           )
-        ],),
+        ],),),
         SizedBox(height: 100),
-        Column(children: [
+        Row(children: [ElevatedButton(onPressed: () => {setState(() {
+          _days_flag = !_days_flag;
+        })}, child: Text("Filtrar dias"))],),
+        Visibility(visible: _days_flag, child: Column(children: [
           Text("Dias atras"),
           Slider(
             value: _daysslidervalue,
@@ -93,7 +105,8 @@ class _MicFilterState extends State<MicFilter> {
               });
             },
           )
-        ],),
+        ],))
+        ,
         SizedBox(height: 100,),
         Column(children: [ElevatedButton(
           onPressed: () { print("Oba"); },
