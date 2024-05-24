@@ -252,6 +252,7 @@ pub async fn list_videos() -> Response {
         .lines()
         .map(|line| line.split_whitespace().last().unwrap())
         .for_each(|name| {
+            println!("Printing name: {:#?}", name);
             let ffprobe = Command::new("ffprobe")
                 .args([
                     "-i",
@@ -276,18 +277,13 @@ pub async fn list_videos() -> Response {
                 .unwrap();
 
             let ffprobe_output = String::from_utf8(ffprobe.stdout).unwrap();
-            let duration = ffprobe_output
-                .lines()
-                .nth(1)
-                .unwrap()
-                .replace("duration=", "");
-
+            
             let du_output = String::from_utf8(du.stdout).unwrap();
             let size = du_output.split_whitespace().next().unwrap();
 
             foo_vec.push(VideoInfo {
                 name: name.to_string(),
-                duration: duration.to_string(),
+                duration: "-".to_string(),
                 size: size.to_string(),
             });
         });
