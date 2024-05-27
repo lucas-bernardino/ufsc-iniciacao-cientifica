@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
+
+import 'package:dio/dio.dart';
 
 class MicResponse {
   final num decibels;
@@ -29,17 +33,28 @@ class MicResponse {
   }
 }
 
-Future<MicResponse> fetchAlbum() async {
-  final response = await http.get(Uri.parse('http://150.162.217.69:3000/last'));
-  final response_json = json.decode(response.body);
-  var foo = MicResponse.fromJson(response_json);
-  print("O proximos sera bom ein");
-  print('Printing response_json: $response_json');
-  if (response.statusCode == 200) {
-    return MicResponse.fromJson(response_json);
-  } else {
-    throw Exception('Failed to load album');
+Future<void> fetchCsv(double min, double limit, String ordered) async {
+  final dio = Dio();
+  
+  print("limit is " + limit.toString());
+
+  final rs = await dio.get(
+    "http://150.162.216.92:3000/filter?min=$min&limit=${limit as int}",
+    options: Options(responseType: ResponseType.stream),
+  );
+
+
+  final file = File('TENTATIVA.csv');
+  final fileStream = file.openWrite();
+
+  await for (final chunk in rs.data.stream) {
+    fileStream.add(chunk);
   }
+
+  await fileStream.close();
+
+  print("Apos os chunks\n");
+
 }
 
 class MicFilter extends StatefulWidget {
@@ -51,16 +66,16 @@ class MicFilter extends StatefulWidget {
 
 class _MicFilterState extends State<MicFilter> {
   late Future<MicResponse> futureAlbum;
-  double _decibelsslidervalue = 60;
-  double _daysslidervalue = 0;
+  double _decibelsslidervalue = 400;
+  double _limitslidervalue = 0;
 
   bool _decibels_flag = false;
-  bool _days_flag = false;
+  bool _limit_flag = false;
 
   @override
   void initState() {
     super.initState();
-    futureAlbum = fetchAlbum();
+    //futureAlbum = fetchAlbum();
   }
 
   @override
@@ -73,11 +88,11 @@ class _MicFilterState extends State<MicFilter> {
         Visibility(
           visible: _decibels_flag,
           child: Column(children: [
-          const Text("Valor máximo Decibéis"),
+          const Text("Valor mínimo Decibéis"),
           Slider(
             value: _decibelsslidervalue,
-            max: 100,
-            min: 40,
+            max: 1000,
+            min: 400,
             divisions: 30,
             label: _decibelsslidervalue.round().toString(),
             onChanged: (double value) {
@@ -89,19 +104,19 @@ class _MicFilterState extends State<MicFilter> {
         ],),),
         SizedBox(height: 100),
         Row(children: [ElevatedButton(onPressed: () => {setState(() {
-          _days_flag = !_days_flag;
-        })}, child: Text("Filtrar dias"))],),
-        Visibility(visible: _days_flag, child: Column(children: [
-          Text("Dias atras"),
+          _limit_flag = !_limit_flag;
+        })}, child: Text("Filtrar quantidade"))],),
+        Visibility(visible: _limit_flag, child: Column(children: [
+          Text("Quantidade de dados"),
           Slider(
-            value: _daysslidervalue,
-            max: 31,
+            value: _limitslidervalue,
+            max: 1000,
             min: 0,
-            divisions: 31,
-            label: _daysslidervalue.round().toString(),
+            divisions: 20,
+            label: _limitslidervalue.round().toString(),
             onChanged: (double value) {
               setState(() {
-                _daysslidervalue = value;
+                _limitslidervalue = value;
               });
             },
           )
@@ -109,7 +124,7 @@ class _MicFilterState extends State<MicFilter> {
         ,
         SizedBox(height: 100,),
         Column(children: [ElevatedButton(
-          onPressed: () { print("Oba"); },
+          onPressed: () { fetchCsv(_decibelsslidervalue, _limitslidervalue, "created_at"); },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
           child: const Row(
             children: [
