@@ -58,6 +58,19 @@ pub async fn create_microphone_handler(
     };
 }
 
+fn handle_serialization(
+    filename: &'static str,
+    data: Vec<MicrophoneModel>,
+) -> Result<(), csv::Error> {
+    let mut csv_wtr = WriterBuilder::new().from_path(filename).unwrap();
+
+    for value in data.iter() {
+        csv_wtr.serialize(value)?;
+    }
+
+    Ok(())
+}
+
 pub async fn get_filter_microphone_handler(
     State(data): State<Arc<AppState>>,
     Query(filter): Query<Filter>,
@@ -107,43 +120,13 @@ pub async fn get_filter_microphone_handler(
         }
     };
 
-    match query {
-        Ok(query_result) => (StatusCode::OK, Json(query_result)).into_response(),
-        Err(_) => {
-            let err_msg = query.unwrap_err().to_string();
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({ "error": err_msg })),
-            )
-                .into_response()
-        }
-    }
-}
-
-fn handle_serialization(
-    filename: &'static str,
-    data: Vec<MicrophoneModel>,
-) -> Result<(), csv::Error> {
-    let mut csv_wtr = WriterBuilder::new().from_path(filename).unwrap();
-
-    for value in data.iter() {
-        csv_wtr.serialize(value)?;
-    }
-
-    Ok(())
-}
-
-pub async fn handle_csv(State(data): State<Arc<AppState>>) -> Response {
-    let query = sqlx::query_as!(MicrophoneModel, "SELECT * FROM microphone")
-        .fetch_all(&data.db)
-        .await;
-
     if query.is_err() {
-        let error_response = serde_json::json!({
-            "status": "INTERNAL_SERVER_ERROR",
-            "message": "Something went wrong in the server."
-        });
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)).into_response();
+        let err_msg = query.unwrap_err().to_string();
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": err_msg })),
+        )
+            .into_response();
     }
 
     match handle_serialization("data.csv", query.unwrap()) {
