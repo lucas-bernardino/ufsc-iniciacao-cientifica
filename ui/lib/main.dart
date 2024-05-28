@@ -1,6 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:microphone_ui/chart.dart';
 import 'package:microphone_ui/filter.dart';
+import 'package:microphone_ui/videos.dart';
 
 /// Flutter code sample for [NavigationRail].
 
@@ -31,12 +34,16 @@ class _NavRailExampleState extends State<NavRailExample> {
   bool showTrailing = false;
   double groupAlignment = -1.0;
 
+  int number_of_videos = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.blueGrey.shade800,
       body: Row(
         children: <Widget>[
           NavigationRail(
+            backgroundColor: Colors.blueGrey.shade900,
             selectedIndex: _selectedIndex,
             groupAlignment: groupAlignment,
             onDestinationSelected: (int index) {
@@ -62,18 +69,18 @@ class _NavRailExampleState extends State<NavRailExample> {
               icon: const Icon(Icons.more_horiz_rounded),
             )
                 : const SizedBox(),
-            destinations: const <NavigationRailDestination>[
+            destinations: <NavigationRailDestination>[
               NavigationRailDestination(
-                icon: Icon(Icons.insert_chart),
-                label: Text('Gráficos'),
+                icon: Icon(Icons.insert_chart, color: Colors.lightBlue.shade800),
+                label: const Text('Gráficos', style: TextStyle(color: Colors.white)),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.videocam),
-                label: Text('Vídeos'),
+                icon: Icon(Icons.videocam, color: Colors.lightBlue.shade800),
+                label: const Text('Vídeos', style: TextStyle(color: Colors.white)),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.manage_search),
-                label: Text('Filtros'),
+                icon: Icon(Icons.manage_search, color: Colors.lightBlue.shade800),
+                label: const Text('Filtros', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -81,17 +88,20 @@ class _NavRailExampleState extends State<NavRailExample> {
           // This is the main content.
           Expanded(
             child: Column(
-
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 if (_selectedIndex == 0)
                   const SizedBox(
-                      height: 600,
-                      width: 900,
+                      height: 800,
+                      width: 1500,
                       child: MicChart()
                   ),
                 if (_selectedIndex == 1)
-                  const Text('Im at Vídeos'),
+                   const SizedBox(
+                    height: 800,
+                    width: 1500,
+                    child: Videos()
+                    ),
                 if (_selectedIndex == 2)
                   const SizedBox(
                     height: 600,
