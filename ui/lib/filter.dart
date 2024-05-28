@@ -35,13 +35,14 @@ class MicResponse {
 
 Future<void> fetchCsv(double min, double limit, String ordered) async {
   final dio = Dio();
-  
+
   print("limit is " + limit.toString());
 
   final rs = await dio.get(
-    "http://150.162.216.92:3000/filter?min=$min&limit=${limit as int}",
+    "http://150.162.216.216:3000/filter?min=$min&limit=${limit.toInt()}",
     options: Options(responseType: ResponseType.stream),
   );
+
 
 
   final file = File('TENTATIVA.csv');
@@ -81,15 +82,23 @@ class _MicFilterState extends State<MicFilter> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(children: [
-        Row(children: [ElevatedButton(onPressed: () => {setState(() {
+      backgroundColor: Colors.blueGrey.shade800,
+      body: Column(
+        children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+            onPressed: () => {setState(() {
           _decibels_flag = !_decibels_flag;
-        })}, child: Text("Filtrar decibéis"))],),
+        })}, child: Text("Filtrar decibéis", style: TextStyle(color: Colors.lightBlue.shade900)))],),
         Visibility(
           visible: _decibels_flag,
           child: Column(children: [
-          const Text("Valor mínimo Decibéis"),
+            SizedBox(height: 70,),
+          const Text("Valor mínimo decibéis", style: TextStyle(color: Colors.white),),
           Slider(
+            activeColor: Colors.lightBlue.shade800,
             value: _decibelsslidervalue,
             max: 1000,
             min: 400,
@@ -102,13 +111,17 @@ class _MicFilterState extends State<MicFilter> {
             },
           )
         ],),),
-        SizedBox(height: 100),
-        Row(children: [ElevatedButton(onPressed: () => {setState(() {
+        SizedBox(height: 60),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [ElevatedButton(onPressed: () => {setState(() {
           _limit_flag = !_limit_flag;
-        })}, child: Text("Filtrar quantidade"))],),
+        })}, child: Text("Filtrar quantidade", style: TextStyle(color: Colors.lightBlue.shade900)))],),
         Visibility(visible: _limit_flag, child: Column(children: [
-          Text("Quantidade de dados"),
+          SizedBox(height: 70,),
+          Text("Quantidade de dados", style: TextStyle(color: Colors.white)),
           Slider(
+            activeColor: Colors.lightBlue.shade800,
             value: _limitslidervalue,
             max: 1000,
             min: 0,
@@ -122,14 +135,18 @@ class _MicFilterState extends State<MicFilter> {
           )
         ],))
         ,
-        SizedBox(height: 100,),
-        Column(children: [ElevatedButton(
+        SizedBox(height: 10,),
+        Column(
+          children: [
+            SizedBox(height: 70,),
+            ElevatedButton(
           onPressed: () { fetchCsv(_decibelsslidervalue, _limitslidervalue, "created_at"); },
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
           child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.download),
-              Text("Download")
+              Icon(Icons.download, color: Colors.white,),
+              Text("Download", style: TextStyle(color: Colors.white),)
             ],
           ),
         )],)
