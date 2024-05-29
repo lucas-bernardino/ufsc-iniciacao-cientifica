@@ -26,17 +26,15 @@ class _VideosState extends State<Videos> {
     var copy = _listTile;
     contents?.asMap().forEach((index, element) {
       var listTile = ListTile(
-          key: Key(index.toString()),
-          leading: CircleAvatar(child: Text(index.toString())),
-          title: Text(element.name),
-          subtitle: const Text('Not Available'),
-          trailing: IconButton(onPressed: () {downloadVideo(index);}, icon: const Icon(Icons.download),)
+        key: Key(index.toString()),
+        leading: CircleAvatar(child: Text(index.toString())),
+        title: Text(element.name, style: TextStyle(color: Colors.white),),
+        trailing: IconButton(onPressed: () {downloadVideo(index);}, icon: const Icon(Icons.download, color: Colors.white,),),
       );
       if (!copy.contains(listTile)) {
         copy.add(listTile);
       }
     });
-    print("I was here. Contents size: ${_listTile.length}");
     setState(() {
       _listTile = copy;
     });
@@ -47,8 +45,11 @@ class _VideosState extends State<Videos> {
   Widget build(BuildContext context) {
     print("I just build");
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Column(
-        children: [IconButton(onPressed: () {updateListTile();}, icon: Icon(Icons.refresh)),ListView(
+        children: [
+          IconButton(onPressed: () {updateListTile();}, icon: Icon(Icons.refresh, color: Colors.white,)),
+          ListView(
           shrinkWrap: true,
           children: _listTile,
         ),],
@@ -87,9 +88,11 @@ class VideosResponse {
 
 Future<List<VideosResponse>?> getListOfVideos() async {
   try {
-    final response = await http.get(Uri.parse('http://150.162.217.224:3000/list'));
+    final response = await http.get(Uri.parse('http://150.162.217.170:3000/list'));
     final List<dynamic> response_json = json.decode(response.body);
     var content = response_json.map((elem) => VideosResponse.fromJson(elem)).toList();
+    print("\n\n\n\n\n\nPrintando o content: " + content.toString());
+
     return content;
   } catch (e){
     print("UNEXPECTED RESPONSE IN THE SERVER $e");
@@ -102,7 +105,7 @@ Future<void> downloadVideo(int video_number) async {
   final dio = Dio();
 
   final rs = await dio.get(
-    "http://150.162.217.224:3000/download/video/$video_number",
+    "http://150.162.217.170:3000/download/video/$video_number",
     options: Options(responseType: ResponseType.stream),
   );
 
