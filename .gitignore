@@ -4,3 +4,15 @@
 /api-rust/target
 /codigo_sensor_rust/target
 /mock-rust/target
+
+/ui/android
+/ui/windows
+/ui/.dart_tool
+/ui/build
+/ui/ios
+/ui/linux
+/ui/web
+/ui/test
+/ui/macos
+
+.idea
