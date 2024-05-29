@@ -13,7 +13,6 @@ class MicChart extends StatefulWidget {
 }
 
 class _MicChart extends State<MicChart> {
-
   DateTime format(String str) {
     int hour = int.parse(str.substring(11, 13));
     int minutes = int.parse(str.substring(14, 16));
@@ -39,7 +38,6 @@ class _MicChart extends State<MicChart> {
     var micResponse = await fetchAlbum();
     double decibels_value = micResponse.decibels / 10;
     DateTime time = format(micResponse.createdAt);
-    print("Time is $time");
     chartData!.add(MicData(time, decibels_value));
     if (chartData?.length == 100) {
       chartData?.removeAt(0);
@@ -57,13 +55,14 @@ class _MicChart extends State<MicChart> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: Colors.transparent,
         body: Center(
             child: Container(
                 child: SfCartesianChart(
                     title: const ChartTitle(
                       text: "Decibéis em tempo real",
                       textStyle: TextStyle(
-                        color: Colors.black54,
+                        color: Colors.white,
                         fontFamily: 'Roboto',
                         fontStyle: FontStyle.italic,
                         fontSize: 14,
@@ -71,6 +70,7 @@ class _MicChart extends State<MicChart> {
                     ),
                     enableAxisAnimation: true,
                     tooltipBehavior: TooltipBehavior(
+                      color: Colors.lightBlue.shade400,
                       enable: true,
                       borderColor: Colors.deepOrange,
                       borderWidth: 2,
@@ -84,13 +84,13 @@ class _MicChart extends State<MicChart> {
                           onRendererCreated: (ChartSeriesController controller) {
                           chartSeriesController_ = controller;
                         },
-                          color: Colors.black54,
+                          color: Colors.lightBlue.shade900,
                           width: 3.5,
                           dataSource: chartData,
                           xValueMapper: (MicData sales, _) => sales.date,
                           yValueMapper: (MicData sales, _) => sales.decibels,
                           enableTooltip: true,
-                          dataLabelSettings:const DataLabelSettings(isVisible : true)
+                          dataLabelSettings:DataLabelSettings(isVisible : true, color: Colors.lightBlue.shade700, borderRadius: 20)
                       )
                     ]
                 )
@@ -132,13 +132,9 @@ class MicResponse {
   }
 }
 
-
 Future<MicResponse> fetchAlbum() async {
-  final response = await http.get(Uri.parse('http://150.162.216.184:3000/last'));
-  final response_json = json.decode(response.body); // '{"decibels":504,"createdAt":"2024-04-18T11:35:12.703293Z"}'
-  var foo = MicResponse.fromJson(response_json);
-  //print("O proximos sera bom ein");
-  print('Printing response_json: $response_json');
+  final response = await http.get(Uri.parse('http://150.162.217.170:3000/last'));
+  final response_json = json.decode(response.body);
   if (response.statusCode == 200) {
     return MicResponse.fromJson(response_json);
   } else {
