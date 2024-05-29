@@ -82,7 +82,7 @@ class _MicFilterState extends State<MicFilter> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueGrey.shade800,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
         Row(

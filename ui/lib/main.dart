@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:microphone_ui/chart.dart';
-import 'package:microphone_ui/filter.dart';
-import 'package:microphone_ui/videos.dart';
+import 'package:ui/chart.dart';
+import 'package:ui/filter.dart';
+import 'package:ui/videos.dart';
 
 /// Flutter code sample for [NavigationRail].
 
