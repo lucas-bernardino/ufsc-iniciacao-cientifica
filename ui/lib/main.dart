@@ -39,7 +39,6 @@ class _NavRailExampleState extends State<NavRailExample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueGrey.shade800,
       body: Row(
         children: <Widget>[
           NavigationRail(
@@ -87,28 +86,37 @@ class _NavRailExampleState extends State<NavRailExample> {
           const VerticalDivider(thickness: 1, width: 1),
           // This is the main content.
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                if (_selectedIndex == 0)
-                  const SizedBox(
+            child: Container(
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [Colors.blueGrey.shade900, Colors.blueGrey.shade600, Colors.blueGrey.shade900]
+                  )
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  if (_selectedIndex == 0)
+                    const SizedBox(
+                        height: 800,
+                        width: 1500,
+                        child: MicChart()
+                    ),
+                  if (_selectedIndex == 1)
+                     const SizedBox(
                       height: 800,
                       width: 1500,
-                      child: MicChart()
-                  ),
-                if (_selectedIndex == 1)
-                   const SizedBox(
-                    height: 800,
-                    width: 1500,
-                    child: Videos()
-                    ),
-                if (_selectedIndex == 2)
-                  const SizedBox(
-                    height: 600,
-                    width: 900,
-                    child: MicFilter(),
-                  )
-              ],
+                      child: Videos()
+                      ),
+                  if (_selectedIndex == 2)
+                    const SizedBox(
+                      height: 600,
+                      width: 900,
+                      child: MicFilter(),
+                    )
+                ],
+              ),
             ),
           ),
         ],
