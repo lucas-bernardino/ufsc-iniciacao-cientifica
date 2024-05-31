@@ -4,14 +4,10 @@ use axum::http::header;
 use axum::response::Response;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use csv::{Writer, WriterBuilder};
-use http_body_util::BodyStream;
-use std::fs;
-use std::io::{BufWriter, Write};
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
-use tokio::io::AsyncWriteExt;
+use tokio::io::{self, AsyncBufReadExt, AsyncReadExt, BufReader};
 use tokio_stream::StreamExt;
-use tower_http::services::ServeFile;
 
 use tokio_util::io::{ReaderStream, StreamReader};
 
@@ -260,7 +256,7 @@ pub async fn list_videos() -> Response {
                 .unwrap();
 
             let ffprobe_output = String::from_utf8(ffprobe.stdout).unwrap();
-            
+
             let du_output = String::from_utf8(du.stdout).unwrap();
             let size = du_output.split_whitespace().next().unwrap();
 
@@ -299,8 +295,9 @@ pub async fn download_by_id(Path(id): Path<u16>) -> Response {
     (headers, body).into_response()
 }
 
-pub async fn last_data(State(data): State<Arc<AppState>>) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)>  {
-
+pub async fn last_data(
+    State(data): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     let query = sqlx::query_as!(
         MicrophoneModel,
         "SELECT * FROM microphone ORDER BY created_at DESC LIMIT 1",
@@ -319,6 +316,33 @@ pub async fn last_data(State(data): State<Arc<AppState>>) -> Result<impl IntoRes
     let query_result = query.unwrap();
 
     Ok(Json(query_result))
+}
 
+//TODO: Rota GET (/route/init)
+//Vai iniciar o localhost.run (lembrar de dar kill caso ja esteja
+//rodando) e vai devolver no body a nova URL pra ser usada pelo flutter
+pub async fn handle_localhost_route() -> impl IntoResponse {
+    //comando: ssh -R 80:localhost:3000 ssh.localhost.run
 
+    let init_command = tokio::process::Command::new("ssh")
+        .args(["-R", "80:localhost:3000", "ssh.localhost.run"])
+        .stdout(Stdio::piped())
+        .spawn();
+
+    let stdout = init_command.unwrap().stdout.take().unwrap();
+
+    let mut reader = BufReader::new(stdout).lines();
+
+    let mut url = String::new();
+
+    while let Some(line) = reader.next_line().await.unwrap() {
+        if line.contains("https") {
+            let remove_trash = line.trim().replace(" ", "");
+            let vec_url = remove_trash.split(",").collect::<Vec<_>>();
+            url = vec_url.get(1).unwrap().to_string();
+            break;
+        }
+    }
+
+    Json(url)
 }
