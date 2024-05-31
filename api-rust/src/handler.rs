@@ -322,8 +322,6 @@ pub async fn last_data(
 //Vai iniciar o localhost.run (lembrar de dar kill caso ja esteja
 //rodando) e vai devolver no body a nova URL pra ser usada pelo flutter
 pub async fn handle_localhost_route() -> impl IntoResponse {
-    //comando: ssh -R 80:localhost:3000 ssh.localhost.run
-
     let init_command = tokio::process::Command::new("ssh")
         .args(["-R", "80:localhost:3000", "ssh.localhost.run"])
         .stdout(Stdio::piped())
@@ -344,5 +342,5 @@ pub async fn handle_localhost_route() -> impl IntoResponse {
         }
     }
 
-    Json(url)
+    Json(serde_json::json!({ "url": url }))
 }
