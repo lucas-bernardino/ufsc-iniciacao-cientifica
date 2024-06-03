@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class MicChart extends StatefulWidget {
   const MicChart({super.key});
 
@@ -133,7 +135,8 @@ class MicResponse {
 }
 
 Future<MicResponse> fetchAlbum() async {
-  final response = await http.get(Uri.parse('http://150.162.217.170:3000/last'));
+  final API_URL = dotenv.env["API_URL"];
+  final response = await http.get(Uri.parse('${API_URL}/last'));
   final response_json = json.decode(response.body);
   if (response.statusCode == 200) {
     return MicResponse.fromJson(response_json);

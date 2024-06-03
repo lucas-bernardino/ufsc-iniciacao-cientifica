@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'package:dio/dio.dart';
 
 class MicResponse {
@@ -34,16 +36,15 @@ class MicResponse {
 }
 
 Future<void> fetchCsv(double min, double limit, String ordered) async {
+
+  final API_URL = dotenv.env["API_URL"];
+
   final dio = Dio();
 
-  print("limit is " + limit.toString());
-
   final rs = await dio.get(
-    "http://150.162.216.216:3000/filter?min=$min&limit=${limit.toInt()}",
+    "${API_URL}/filter?min=$min&limit=${limit.toInt()}",
     options: Options(responseType: ResponseType.stream),
   );
-
-
 
   final file = File('TENTATIVA.csv');
   final fileStream = file.openWrite();
@@ -53,8 +54,6 @@ Future<void> fetchCsv(double min, double limit, String ordered) async {
   }
 
   await fileStream.close();
-
-  print("Apos os chunks\n");
 
 }
 

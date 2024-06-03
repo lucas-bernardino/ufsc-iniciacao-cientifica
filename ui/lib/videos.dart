@@ -9,6 +9,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class Videos extends StatefulWidget {
   const Videos({super.key});
 
@@ -43,7 +45,6 @@ class _VideosState extends State<Videos> {
 
   @override
   Widget build(BuildContext context) {
-    print("I just build");
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Column(
@@ -88,11 +89,10 @@ class VideosResponse {
 
 Future<List<VideosResponse>?> getListOfVideos() async {
   try {
-    final response = await http.get(Uri.parse('http://150.162.217.170:3000/list'));
+    final API_URL = dotenv.env["API_URL"];
+    final response = await http.get(Uri.parse('${API_URL}/list'));
     final List<dynamic> response_json = json.decode(response.body);
     var content = response_json.map((elem) => VideosResponse.fromJson(elem)).toList();
-    print("\n\n\n\n\n\nPrintando o content: " + content.toString());
-
     return content;
   } catch (e){
     print("UNEXPECTED RESPONSE IN THE SERVER $e");
@@ -102,10 +102,10 @@ Future<List<VideosResponse>?> getListOfVideos() async {
 }
 
 Future<void> downloadVideo(int video_number) async {
+  final API_URL = dotenv.env["API_URL"];
   final dio = Dio();
-
   final rs = await dio.get(
-    "http://150.162.217.170:3000/download/video/$video_number",
+    "${API_URL}/download/video/$video_number",
     options: Options(responseType: ResponseType.stream),
   );
 

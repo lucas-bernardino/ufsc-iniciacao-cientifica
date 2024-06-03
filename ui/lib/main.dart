@@ -5,9 +5,14 @@ import 'package:ui/chart.dart';
 import 'package:ui/filter.dart';
 import 'package:ui/videos.dart';
 
-/// Flutter code sample for [NavigationRail].
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() => runApp(const NavigationRailExampleApp());
+Future main() async {
+  await dotenv.load(fileName: ".env");
+  String? minhaKey = dotenv.env["API_URL"];
+  print("Minha key: " + minhaKey!);
+  runApp(const NavigationRailExampleApp());
+}
 
 class NavigationRailExampleApp extends StatelessWidget {
   const NavigationRailExampleApp({super.key});
