@@ -1,12 +1,16 @@
+import os
+from dotenv import load_dotenv
 import smtplib
 from email.mime.text import MIMEText
 
-subject = "Email Subject"
-body = "API_URL:https://asdajsiodsjfddjidsjifdsjfsjod"
-sender = "microfoneprojeto@gmail.com"
-recipients = ["lucasgber@gmail.com"]
-password = "foo"
+load_dotenv()
+GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD", "")
 
+subject = "API"
+body = "HEYYYY JUDE"
+sender = "microfoneprojeto@gmail.com"
+recipients = ["microfoneprojeto@gmail.com"]
+password = GMAIL_PASSWORD
 
 def send_email(subject, body, sender, recipients, password):
     msg = MIMEText(body)
