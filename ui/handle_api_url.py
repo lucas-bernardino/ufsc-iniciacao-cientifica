@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 import imaplib
 
 load_dotenv()
-GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD", "")
+GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD", "").replace("_", " ")
 
 def send_email():
     subject = "API"
@@ -55,5 +55,14 @@ def get_email():
     url = content[-1]
     return url
 
-api_url = get_email()
-print(f"API_URL: {api_url}")
+def change_env_variables(url):
+    with open(".env", "r+") as f:
+        untouchable = f.readlines()[1].rstrip()
+        text_to_write = f"API_URL={url}\n{untouchable}"
+        f.truncate()
+        f.seek(0)
+        f.write(text_to_write)
+
+change_env_variables("httphttp")
+#api_url = get_email()
+#print(f"API_URL: {api_url}")
