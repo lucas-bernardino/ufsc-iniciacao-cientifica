@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{process::Stdio, sync::Arc};
 
 use tokio::sync::Mutex;
 
@@ -6,6 +6,8 @@ use axum::{routing::get, routing::post, Router};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::cors::{Any, CorsLayer};
+
+use tokio::io::{self, AsyncBufReadExt, BufReader};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -25,6 +27,10 @@ use crate::handler::{
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+
+    let url = start_server();
+
+    println!("Start running with public url: {}", url.await.unwrap());
 
     let database_url = std::env::var("DATABASE_URL").expect("Missing DATABASE_URL in .env");
     let pool = match PgPoolOptions::new()
@@ -65,4 +71,31 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+async fn start_server() -> Result<String, Box<dyn std::error::Error + 'static>> {
+    let init_command = tokio::process::Command::new("ssh")
+        .args(["-R", "80:localhost:3000", "ssh.localhost.run"])
+        .stdout(Stdio::piped())
+        .spawn();
+
+    let stdout = init_command?.stdout.take();
+
+    let mut reader = match stdout {
+        Some(s) => BufReader::new(s).lines(),
+        None => return Err("Could not get stdout".into()),
+    };
+
+    let mut url = String::new();
+
+    while let Some(line) = reader.next_line().await.unwrap() {
+        if line.contains("https") {
+            let remove_trash = line.trim().replace(" ", "");
+            let vec_url = remove_trash.split(",").collect::<Vec<_>>();
+            url = vec_url.get(1).unwrap().to_string();
+            break;
+        }
+    }
+
+    Ok(url)
 }
