@@ -9,6 +9,10 @@ use tower_http::cors::{Any, CorsLayer};
 
 use tokio::io::{self, AsyncBufReadExt, BufReader};
 
+use lettre::message::header::ContentType;
+use lettre::transport::smtp::authentication::Credentials;
+use lettre::{Message, SmtpTransport, Transport};
+
 #[derive(Clone)]
 pub struct AppState {
     db: Pool<Postgres>,
@@ -28,9 +32,7 @@ use crate::handler::{
 async fn main() {
     dotenv().ok();
 
-    let url = start_server();
-
-    println!("Start running with public url: {}", url.await.unwrap());
+    let _ = send_email().await;
 
     let database_url = std::env::var("DATABASE_URL").expect("Missing DATABASE_URL in .env");
     let pool = match PgPoolOptions::new()
@@ -98,4 +100,40 @@ async fn start_server() -> Result<String, Box<dyn std::error::Error + 'static>> 
     }
 
     Ok(url)
+}
+
+async fn send_email() -> Result<(), Box<dyn std::error::Error + 'static>> {
+    let url = match start_server().await {
+        Ok(u) => u,
+        Err(e) => {
+            return Err(format!(
+                "Could not send email due to an error in starting the server\nError: {}",
+                e.to_string()
+            )
+            .into())
+        }
+    };
+
+    let email = Message::builder()
+        .from("microfoneprojeto@gmail.com".parse()?)
+        .to("lucasgber@gmail.com".parse()?)
+        .subject("TESTE")
+        .header(ContentType::TEXT_PLAIN)
+        .body(String::from("Be happy!"))?;
+
+    let password = std::env::var("GMAIL_PASSWORD")?.replace("_", " ");
+
+    let creds = Credentials::new("microfoneprojeto@gmail.com".to_owned(), password.to_owned());
+
+    let mailer = SmtpTransport::relay("smtp.gmail.com")
+        .unwrap()
+        .credentials(creds)
+        .build();
+
+    match mailer.send(&email) {
+        Ok(_) => println!("Email sent successfully!"),
+        Err(e) => panic!("Could not send email: {e:?}"),
+    }
+
+    Ok(())
 }
