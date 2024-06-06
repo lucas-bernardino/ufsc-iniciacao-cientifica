@@ -116,10 +116,10 @@ async fn send_email() -> Result<(), Box<dyn std::error::Error + 'static>> {
 
     let email = Message::builder()
         .from("microfoneprojeto@gmail.com".parse()?)
-        .to("lucasgber@gmail.com".parse()?)
-        .subject("TESTE")
+        .to("microfoneprojeto@gmail.com".parse()?)
+        .subject("API")
         .header(ContentType::TEXT_PLAIN)
-        .body(String::from("Be happy!"))?;
+        .body(url)?;
 
     let password = std::env::var("GMAIL_PASSWORD")?.replace("_", " ");
 
