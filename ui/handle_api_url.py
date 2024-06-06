@@ -9,7 +9,7 @@ GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD", "").replace("_", " ")
 
 def send_email():
     subject = "API"
-    body = "URL:http://150.153.214.42:3000"
+    body = "URL:aisudhaiushdias"
     sender = "microfoneprojeto@gmail.com"
     recipients = ["microfoneprojeto@gmail.com"]
     password = GMAIL_PASSWORD
@@ -49,13 +49,11 @@ def get_email():
     raw_email = (data[0][1]).decode("utf-8") 
     content = format_raw_email(raw_email)
   
-    if content[-4] != "From: microfoneprojeto@gmail.com" or content[-3] != "To: microfoneprojeto@gmail.com":
-        raise Exception("Failed to parse email") 
-    
     url = content[-1]
     return url
 
-def change_env_variables(url):
+def change_env_variables():
+    url = get_email()
     with open(".env", "r+") as f:
         untouchable = f.readlines()[1].rstrip()
         text_to_write = f"API_URL={url}\n{untouchable}"
@@ -63,6 +61,7 @@ def change_env_variables(url):
         f.seek(0)
         f.write(text_to_write)
 
-change_env_variables("httphttp")
-#api_url = get_email()
-#print(f"API_URL: {api_url}")
+#get_email()
+#send_email()
+if __name__ == "__main__":
+    change_env_variables()
