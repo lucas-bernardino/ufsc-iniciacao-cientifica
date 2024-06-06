@@ -4,6 +4,9 @@ use axum::http::header;
 use axum::response::Response;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use csv::{Writer, WriterBuilder};
+use lettre::message::header::ContentType;
+use lettre::transport::smtp::authentication::Credentials;
+use lettre::{Message, SmtpTransport, Transport};
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use tokio::io::{self, AsyncBufReadExt, AsyncReadExt, BufReader};
@@ -318,9 +321,31 @@ pub async fn last_data(
     Ok(Json(query_result))
 }
 
-//TODO: Rota GET (/route/init)
-//Vai iniciar o localhost.run (lembrar de dar kill caso ja esteja
-//rodando) e vai devolver no body a nova URL pra ser usada pelo flutter
+async fn send_email(url: &str) -> Result<(), Box<dyn std::error::Error + 'static>> {
+    let email = Message::builder()
+        .from("microfoneprojeto@gmail.com".parse()?)
+        .to("microfoneprojeto@gmail.com".parse()?)
+        .subject("API")
+        .header(ContentType::TEXT_PLAIN)
+        .body(url.to_string())?;
+
+    let password = std::env::var("GMAIL_PASSWORD")?.replace("_", " ");
+
+    let creds = Credentials::new("microfoneprojeto@gmail.com".to_owned(), password.to_owned());
+
+    let mailer = SmtpTransport::relay("smtp.gmail.com")
+        .unwrap()
+        .credentials(creds)
+        .build();
+
+    match mailer.send(&email) {
+        Ok(_) => println!("Email sent successfully!"),
+        Err(e) => panic!("Could not send email: {e:?}"),
+    }
+
+    Ok(())
+}
+
 pub async fn handle_localhost_route() -> impl IntoResponse {
     let init_command = tokio::process::Command::new("ssh")
         .args(["-R", "80:localhost:3000", "ssh.localhost.run"])
@@ -341,6 +366,14 @@ pub async fn handle_localhost_route() -> impl IntoResponse {
             break;
         }
     }
+
+    match send_email(url.as_str()).await {
+        Ok(()) => println!("Send email successfully in handle_localhost_route"),
+        Err(e) => println!(
+            "Error when sending the email in handle_localhost_route: {}",
+            e.to_string()
+        ),
+    };
 
     Json(serde_json::json!({ "url": url }))
 }
