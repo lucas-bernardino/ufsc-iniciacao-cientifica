@@ -1,5 +1,6 @@
 use std::{process::Stdio, sync::Arc};
 
+use serde::Deserialize;
 use tokio::sync::Mutex;
 
 use axum::{routing::get, routing::post, Router};
@@ -19,6 +20,11 @@ pub struct AppState {
     file_count: Arc<Mutex<u16>>,
 }
 
+#[derive(Deserialize)]
+struct RouteResponse {
+    url: String,
+}
+
 mod handler;
 mod models;
 
@@ -32,7 +38,9 @@ use crate::handler::{
 async fn main() {
     dotenv().ok();
 
-    let _ = send_email().await;
+    let mut localhostrun_url = init_server_email().await.unwrap();
+
+    println!("Started with the url: {localhostrun_url}");
 
     let database_url = std::env::var("DATABASE_URL").expect("Missing DATABASE_URL in .env");
     let pool = match PgPoolOptions::new()
@@ -56,7 +64,7 @@ async fn main() {
     });
 
     let app = Router::new()
-        .route("/", get(|| async { "Hello, Rust!" }))
+        .route("/", get(|| async { "Running" }))
         .route("/create", post(create_microphone_handler))
         .route("/get", get(get_microphone_handler))
         .route("/filter", get(get_filter_microphone_handler))
@@ -69,10 +77,42 @@ async fn main() {
         .route("/route/init", get(handle_localhost_route))
         .with_state(app_state);
 
-    println!("Running on http://localhost:3000");
+    let script_check = tokio::spawn(async move {
+        let client = reqwest::Client::new();
+        let mut counter = 0;
+        loop {
+            let response = client
+                .get(localhostrun_url.clone())
+                .send()
+                .await
+                .unwrap()
+                .status();
+            if response != 200 {
+                let init_response = client
+                    .get("http://localhost:3000/route/init")
+                    .send()
+                    .await
+                    .unwrap()
+                    .json::<RouteResponse>()
+                    .await
+                    .unwrap();
+                let new_url = init_response.url;
+                send_email(&new_url).await.unwrap();
+                println!("Changed url to: {new_url}");
+                localhostrun_url = new_url;
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+            println!("Current status: {response}");
+            counter += 1;
+        }
+    });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
+
+    println!("Server running sucessfully on port 3000 ✅");
+
+    script_check.await.unwrap();
 }
 
 async fn start_server() -> Result<String, Box<dyn std::error::Error + 'static>> {
@@ -102,24 +142,13 @@ async fn start_server() -> Result<String, Box<dyn std::error::Error + 'static>> 
     Ok(url)
 }
 
-async fn send_email() -> Result<(), Box<dyn std::error::Error + 'static>> {
-    let url = match start_server().await {
-        Ok(u) => u,
-        Err(e) => {
-            return Err(format!(
-                "Could not send email due to an error in starting the server\nError: {}",
-                e.to_string()
-            )
-            .into())
-        }
-    };
-
+async fn send_email(url: &String) -> Result<(), Box<dyn std::error::Error + 'static>> {
     let email = Message::builder()
         .from("microfoneprojeto@gmail.com".parse()?)
         .to("microfoneprojeto@gmail.com".parse()?)
         .subject("API")
         .header(ContentType::TEXT_PLAIN)
-        .body(url)?;
+        .body(url.clone())?;
 
     let password = std::env::var("GMAIL_PASSWORD")?.replace("_", " ");
 
@@ -136,4 +165,20 @@ async fn send_email() -> Result<(), Box<dyn std::error::Error + 'static>> {
     }
 
     Ok(())
+}
+
+async fn init_server_email() -> Result<String, Box<dyn std::error::Error + 'static>> {
+    let url = match start_server().await {
+        Ok(u) => u,
+        Err(e) => {
+            return Err(format!(
+                "Could not send email due to an error in starting the server\nError: {}",
+                e.to_string()
+            )
+            .into())
+        }
+    };
+
+    send_email(&url).await.unwrap();
+    Ok(url)
 }
