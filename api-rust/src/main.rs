@@ -78,17 +78,18 @@ async fn main() {
         .with_state(app_state);
 
     let script_check = tokio::spawn(async move {
-        let client = reqwest::Client::new();
-        let mut counter = 0;
         loop {
-            let response = client
+            let response = reqwest::Client::new()
                 .get(localhostrun_url.clone())
+                .header("Cache-Control", "no-cache, no-store, must-revalidate")
+                .header("Pragma", "no-cache")
+                .header("Expires", "0")
                 .send()
                 .await
                 .unwrap()
                 .status();
             if response != 200 {
-                let init_response = client
+                let init_response = reqwest::Client::new()
                     .get("http://localhost:3000/route/init")
                     .send()
                     .await
@@ -102,8 +103,6 @@ async fn main() {
                 localhostrun_url = new_url;
             }
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-            println!("Current status: {response}");
-            counter += 1;
         }
     });
 
