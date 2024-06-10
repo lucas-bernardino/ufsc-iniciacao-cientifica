@@ -154,7 +154,7 @@ pub async fn get_filter_microphone_handler(
 }
 
 pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) -> Response {
-    let file_count = data.file_count.lock().await;
+    let mut file_count = data.file_count.lock().await;
 
     let mut file = tokio::fs::File::create(format!("video{}.mkv", file_count))
         .await
@@ -168,6 +168,8 @@ pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) ->
     let mut body_stream = StreamReader::new(stream);
 
     tokio::io::copy(&mut body_stream, &mut file).await.unwrap();
+
+    *file_count += 1;
 
     "".into_response()
 }
