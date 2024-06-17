@@ -46,7 +46,7 @@ Future<void> fetchCsv(double min, double limit, String ordered) async {
     options: Options(responseType: ResponseType.stream),
   );
 
-  final file = File('TENTATIVA.csv');
+  final file = File('hashua.csv');
   final fileStream = file.openWrite();
 
   await for (final chunk in rs.data.stream) {
@@ -68,9 +68,11 @@ class _MicFilterState extends State<MicFilter> {
   late Future<MicResponse> futureAlbum;
   double _decibelsslidervalue = 400;
   double _limitslidervalue = 0;
+  double _ordenationslidervalue = 0;
 
   bool _decibels_flag = false;
   bool _limit_flag = false;
+  bool _ordenation_flag = false;
 
   @override
   void initState() {
@@ -90,11 +92,11 @@ class _MicFilterState extends State<MicFilter> {
             ElevatedButton(
             onPressed: () => {setState(() {
           _decibels_flag = !_decibels_flag;
-        })}, child: Text("Filtrar decibéis", style: TextStyle(color: Colors.lightBlue.shade900)))],),
+           })}, child: Text("Filtrar decibéis", style: TextStyle(color: Colors.lightBlue.shade900)))],),
         Visibility(
           visible: _decibels_flag,
           child: Column(children: [
-            SizedBox(height: 70,),
+            SizedBox(height: 30,),
           const Text("Valor mínimo decibéis", style: TextStyle(color: Colors.white),),
           Slider(
             activeColor: Colors.lightBlue.shade800,
@@ -110,14 +112,14 @@ class _MicFilterState extends State<MicFilter> {
             },
           )
         ],),),
-        SizedBox(height: 60),
+        SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [ElevatedButton(onPressed: () => {setState(() {
           _limit_flag = !_limit_flag;
         })}, child: Text("Filtrar quantidade", style: TextStyle(color: Colors.lightBlue.shade900)))],),
         Visibility(visible: _limit_flag, child: Column(children: [
-          SizedBox(height: 70,),
+          SizedBox(height: 30,),
           Text("Quantidade de dados", style: TextStyle(color: Colors.white)),
           Slider(
             activeColor: Colors.lightBlue.shade800,
@@ -132,14 +134,37 @@ class _MicFilterState extends State<MicFilter> {
               });
             },
           )
+        ],)),
+        SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [ElevatedButton(onPressed: () => {setState(() {
+            _ordenation_flag = !_ordenation_flag;
+          })}, child: Text("Filtrar ordenação", style: TextStyle(color: Colors.lightBlue.shade900)))],),
+        Visibility(visible: _ordenation_flag, child: Column(children: [
+          SizedBox(height: 30,),
+          Text("Ordenação decrescente", style: TextStyle(color: Colors.white)),
+          Slider(
+            activeColor: Colors.lightBlue.shade800,
+            value: _ordenationslidervalue,
+            max: 1,
+            min: 0,
+            divisions: 1,
+            label: _ordenationslidervalue == 0 ? "Decibéis" : "Data de Criação",
+            onChanged: (double value) {
+              setState(() {
+                _ordenationslidervalue = value;
+              });
+            },
+          )
         ],))
         ,
         SizedBox(height: 10,),
         Column(
           children: [
-            SizedBox(height: 70,),
+            SizedBox(height: 30,),
             ElevatedButton(
-          onPressed: () { fetchCsv(_decibelsslidervalue, _limitslidervalue, "created_at"); },
+          onPressed: () { fetchCsv(_decibelsslidervalue, _limitslidervalue, _ordenationslidervalue == 0 ? "decibels" : "created_at"); },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
