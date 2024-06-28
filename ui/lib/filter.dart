@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dio/dio.dart';
 
 import 'package:csv/csv.dart';
+
+import 'package:syncfusion_flutter_charts/charts.dart';
+import 'dart:ui' as ui;
+
+import 'dart:typed_data';
 
 class MicResponse {
   final num decibels;
@@ -67,6 +73,7 @@ class MicFilter extends StatefulWidget {
 }
 
 class _MicFilterState extends State<MicFilter> {
+
   late Future<MicResponse> futureAlbum;
   double _decibelsslidervalue = 400;
   double _limitslidervalue = 0;
@@ -75,6 +82,8 @@ class _MicFilterState extends State<MicFilter> {
   bool _decibels_flag = false;
   bool _limit_flag = false;
   bool _ordenation_flag = false;
+
+  final GlobalKey<SfCartesianChartState> _cartesianChartKey = GlobalKey();
 
   @override
   void initState() {
@@ -177,8 +186,29 @@ class _MicFilterState extends State<MicFilter> {
           ),
         ),
         SizedBox(height: 30,),
+        Container(
+          child: SfCartesianChart(
+            key: _cartesianChartKey,
+            // Initialize category axis (e.g., x-axis)
+            primaryXAxis: CategoryAxis(),
+            series: <ColumnSeries<DataPoints, String>>[
+              // Initialize line series with data points
+              ColumnSeries<DataPoints, String>(
+                dataSource: [
+                  DataPoints('Jan', 35),
+                  DataPoints('Feb', 28),
+                  DataPoints('Mar', 34),
+                  DataPoints('Apr', 32),
+                  DataPoints('May', 40),
+                ],
+                xValueMapper: (DataPoints sales, _) => sales.x,
+                yValueMapper: (DataPoints sales, _) => sales.y,
+              ),
+            ],
+          ),
+        ),
         ElevatedButton(
-          onPressed: () { processCsv(context); },
+          onPressed: () { _renderChartAsImage(_cartesianChartKey); },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -200,3 +230,24 @@ Future<List<List<dynamic>>> processCsv(BuildContext context) async {
   var csvList = const CsvToListConverter().convert(result, eol: "\n");
   return csvList;
 }
+
+Future<void> saveImageToFile(Uint8List bytes, String filePath) async {
+  await File(filePath).writeAsBytes(bytes);
+}
+
+Future<void> _renderChartAsImage(GlobalKey<SfCartesianChartState> cck) async {
+  print("ENTREIIIIIIII\n\n\n");
+  final image = await cck.currentState?.toImage(pixelRatio: 3.0);
+  final byteData = await image?.toByteData(format: ImageByteFormat.png);
+  Uint8List? uint8List = byteData?.buffer.asUint8List();
+  File file = File('image.png'); // Specify the desired file path
+  await file.writeAsBytes(uint8List as List<int>);
+  print("SAAAAAAAAI\n\n\n");
+}
+
+class DataPoints {
+  DataPoints (this.x, this.y);
+  final String? x;
+  final num? y;
+}
+
