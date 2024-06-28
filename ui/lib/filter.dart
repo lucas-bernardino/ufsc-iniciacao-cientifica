@@ -11,6 +11,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:dio/dio.dart';
 
+import 'package:csv/csv.dart';
+
 class MicResponse {
   final num decibels;
   final String createdAt;
@@ -170,11 +172,31 @@ class _MicFilterState extends State<MicFilter> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.download, color: Colors.white,),
-              Text("Download", style: TextStyle(color: Colors.white),)
+              Text("Download CSV", style: TextStyle(color: Colors.white),)
+            ],
+          ),
+        ),
+        SizedBox(height: 30,),
+        ElevatedButton(
+          onPressed: () { processCsv(context); },
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.download, color: Colors.white,),
+              Text("Gerar imagem", style: TextStyle(color: Colors.white),)
             ],
           ),
         )],)
       ],),
     );
   }
+}
+
+Future<List<List<dynamic>>> processCsv(BuildContext context) async {
+  var result = await DefaultAssetBundle.of(context).loadString(
+    "dados_trator.csv",
+  );
+  var csvList = const CsvToListConverter().convert(result, eol: "\n");
+  return csvList;
 }
