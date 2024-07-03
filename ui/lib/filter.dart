@@ -186,6 +186,15 @@ class _MicFilterState extends State<MicFilter> {
           ),
         ),
         SizedBox(height: 30,),
+        FutureBuilder(
+            future: processCsv(context),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                return ChartImage(context, _cartesianChartKey, snapshot.data);
+              } else {
+                return const CircularProgressIndicator();
+              }
+            }),
         ElevatedButton(
           onPressed: () { _renderChartAsImage(_cartesianChartKey); },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
