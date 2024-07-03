@@ -186,27 +186,6 @@ class _MicFilterState extends State<MicFilter> {
           ),
         ),
         SizedBox(height: 30,),
-        Container(
-          child: SfCartesianChart(
-            key: _cartesianChartKey,
-            // Initialize category axis (e.g., x-axis)
-            primaryXAxis: CategoryAxis(),
-            series: <ColumnSeries<DataPoints, String>>[
-              // Initialize line series with data points
-              ColumnSeries<DataPoints, String>(
-                dataSource: [
-                  DataPoints('Jan', 35),
-                  DataPoints('Feb', 28),
-                  DataPoints('Mar', 34),
-                  DataPoints('Apr', 32),
-                  DataPoints('May', 40),
-                ],
-                xValueMapper: (DataPoints sales, _) => sales.x,
-                yValueMapper: (DataPoints sales, _) => sales.y,
-              ),
-            ],
-          ),
-        ),
         ElevatedButton(
           onPressed: () { _renderChartAsImage(_cartesianChartKey); },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
@@ -223,6 +202,28 @@ class _MicFilterState extends State<MicFilter> {
   }
 }
 
+Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck, csvData) {
+  List<DataPoints> _dataSource = [];
+  for (var item in csvData.skip(1)) {
+    _dataSource.add(DataPoints(item[2], item[1]));
+  }
+  return Container(
+    child: SfCartesianChart(
+      key: cck,
+      // Initialize category axis (e.g., x-axis)
+      primaryXAxis: CategoryAxis(),
+      series: <ColumnSeries<DataPoints, String>>[
+        // Initialize line series with data points
+        ColumnSeries<DataPoints, String>(
+          dataSource: _dataSource,
+          xValueMapper: (DataPoints sales, _) => sales.x,
+          yValueMapper: (DataPoints sales, _) => sales.y,
+        ),
+      ],
+    ),
+  );
+}
+
 Future<List<List<dynamic>>> processCsv(BuildContext context) async {
   var result = await DefaultAssetBundle.of(context).loadString(
     "dados_trator.csv",
@@ -236,13 +237,11 @@ Future<void> saveImageToFile(Uint8List bytes, String filePath) async {
 }
 
 Future<void> _renderChartAsImage(GlobalKey<SfCartesianChartState> cck) async {
-  print("ENTREIIIIIIII\n\n\n");
   final image = await cck.currentState?.toImage(pixelRatio: 3.0);
   final byteData = await image?.toByteData(format: ImageByteFormat.png);
   Uint8List? uint8List = byteData?.buffer.asUint8List();
   File file = File('image.png'); // Specify the desired file path
   await file.writeAsBytes(uint8List as List<int>);
-  print("SAAAAAAAAI\n\n\n");
 }
 
 class DataPoints {
