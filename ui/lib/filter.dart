@@ -210,23 +210,55 @@ class _MicFilterState extends State<MicFilter> {
     );
   }
 }
-
 Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck, csvData) {
   List<DataPoints> _dataSource = [];
   for (var item in csvData.skip(1)) {
-    _dataSource.add(DataPoints(item[2], item[1]));
+    double decibelsParsed = item[1] / 10;
+    String timestampParsed = item[2].toString().substring(11, 23);
+    _dataSource.add(DataPoints(timestampParsed, decibelsParsed));
   }
   return Container(
     child: SfCartesianChart(
+      enableAxisAnimation: true,
+      tooltipBehavior: TooltipBehavior(
+        color: Colors.lightBlue.shade400,
+        enable: true,
+        borderColor: Colors.deepOrange,
+        borderWidth: 2,
+        header: "",
+      ),
+      zoomPanBehavior: ZoomPanBehavior(
+        enablePanning: true,
+        enableMouseWheelZooming: true,
+        enablePinching: true,
+      ),
       key: cck,
       // Initialize category axis (e.g., x-axis)
-      primaryXAxis: CategoryAxis(),
+      primaryXAxis: const CategoryAxis(
+          labelStyle: TextStyle(
+              color: Colors.white,
+              fontFamily: 'Roboto',
+              fontSize: 14,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w500
+          )
+      ),
+      primaryYAxis: const NumericAxis(
+          labelStyle: TextStyle(
+              color: Colors.white,
+              fontFamily: 'Roboto',
+              fontSize: 14,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w500
+          )
+      ),
       series: <ColumnSeries<DataPoints, String>>[
         // Initialize line series with data points
         ColumnSeries<DataPoints, String>(
+          color: Colors.lightBlue,
           dataSource: _dataSource,
-          xValueMapper: (DataPoints sales, _) => sales.x,
-          yValueMapper: (DataPoints sales, _) => sales.y,
+          xValueMapper: (DataPoints value, _) => value.x,
+          yValueMapper: (DataPoints value, _) => value.y,
         ),
       ],
     ),
