@@ -107,7 +107,7 @@ class _MicFilterState extends State<MicFilter> {
         Visibility(
           visible: _decibels_flag,
           child: Column(children: [
-            SizedBox(height: 30,),
+            SizedBox(height: 10,),
           const Text("Valor mínimo decibéis", style: TextStyle(color: Colors.white),),
           Slider(
             activeColor: Colors.lightBlue.shade800,
@@ -130,7 +130,7 @@ class _MicFilterState extends State<MicFilter> {
           _limit_flag = !_limit_flag;
         })}, child: Text("Filtrar quantidade", style: TextStyle(color: Colors.lightBlue.shade900)))],),
         Visibility(visible: _limit_flag, child: Column(children: [
-          SizedBox(height: 30,),
+          SizedBox(height: 10,),
           Text("Quantidade de dados", style: TextStyle(color: Colors.white)),
           Slider(
             activeColor: Colors.lightBlue.shade800,
@@ -153,7 +153,7 @@ class _MicFilterState extends State<MicFilter> {
             _ordenation_flag = !_ordenation_flag;
           })}, child: Text("Filtrar ordenação", style: TextStyle(color: Colors.lightBlue.shade900)))],),
         Visibility(visible: _ordenation_flag, child: Column(children: [
-          SizedBox(height: 30,),
+          SizedBox(height: 10,),
           Text("Ordenação decrescente", style: TextStyle(color: Colors.white)),
           Slider(
             activeColor: Colors.lightBlue.shade800,
@@ -170,10 +170,10 @@ class _MicFilterState extends State<MicFilter> {
           )
         ],))
         ,
-        SizedBox(height: 10,),
+        SizedBox(height: 20,),
         Column(
           children: [
-            SizedBox(height: 30,),
+            SizedBox(height: 10,),
             ElevatedButton(
           onPressed: () { fetchCsv(_decibelsslidervalue, _limitslidervalue, _ordenationslidervalue == 0 ? "decibels" : "created_at"); },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
@@ -185,17 +185,21 @@ class _MicFilterState extends State<MicFilter> {
             ],
           ),
         ),
-        SizedBox(height: 30,),
+        SizedBox(height: 20,),
         FutureBuilder(
             future: processCsv(context),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                return ChartImage(context, _cartesianChartKey, snapshot.data);
+                return Visibility(
+                    visible: !_decibels_flag && !_limit_flag && !_ordenation_flag,
+                    child: ChartImage(context, _cartesianChartKey, snapshot.data)
+                );
               } else {
                 return const CircularProgressIndicator();
               }
             }),
-        ElevatedButton(
+        SizedBox(height: 10,),
+            ElevatedButton(
           onPressed: () { _renderChartAsImage(_cartesianChartKey); },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
           child: const Row(
@@ -219,6 +223,15 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
   }
   return Container(
     child: SfCartesianChart(
+      title: const ChartTitle(
+        text: "Decibéis ao longo do tempo",
+        textStyle: TextStyle(
+          color: Colors.white,
+          fontFamily: 'Roboto',
+          fontStyle: FontStyle.italic,
+          fontSize: 14,
+        ),
+      ),
       enableAxisAnimation: true,
       tooltipBehavior: TooltipBehavior(
         color: Colors.lightBlue.shade400,
