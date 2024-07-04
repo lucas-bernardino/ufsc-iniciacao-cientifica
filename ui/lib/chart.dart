@@ -76,9 +76,26 @@ class _MicChart extends State<MicChart> {
                       enable: true,
                       borderColor: Colors.deepOrange,
                       borderWidth: 2,
-                      header: "foo",
+                      header: "",
                     ),
-                    primaryXAxis: const DateTimeAxis(),
+                    primaryXAxis: const CategoryAxis(
+                        labelStyle: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Roboto',
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w500
+                        )
+                    ),
+                    primaryYAxis: const NumericAxis(
+                        labelStyle: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Roboto',
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w500
+                        )
+                    ),
                     plotAreaBackgroundColor: Colors.teal[100],
                     series: <CartesianSeries>[
                       // Renders line chart
