@@ -44,6 +44,7 @@ class MicResponse {
 }
 
 Future<void> fetchCsv(double min, double limit, String ordered) async {
+  min *= 10;
   final API_URL = dotenv.env["API_URL"];
 
   final dio = Dio();
@@ -74,7 +75,7 @@ class MicFilter extends StatefulWidget {
 class _MicFilterState extends State<MicFilter> {
 
   late Future<MicResponse> futureAlbum;
-  double _decibelsslidervalue = 400;
+  double _decibelsslidervalue = 40;
   double _limitslidervalue = 0;
   double _ordenationslidervalue = 0;
 
@@ -111,8 +112,8 @@ class _MicFilterState extends State<MicFilter> {
           Slider(
             activeColor: Colors.lightBlue.shade800,
             value: _decibelsslidervalue,
-            max: 1000,
-            min: 400,
+            max: 100,
+            min: 40,
             divisions: 30,
             label: _decibelsslidervalue.round().toString(),
             onChanged: (double value) {
@@ -256,6 +257,7 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
           )
       ),
       primaryYAxis: const NumericAxis(
+          minimum: 45,
           labelStyle: TextStyle(
               color: Colors.white,
               fontFamily: 'Roboto',
