@@ -44,7 +44,6 @@ class MicResponse {
 }
 
 Future<void> fetchCsv(double min, double limit, String ordered) async {
-
   final API_URL = dotenv.env["API_URL"];
 
   final dio = Dio();
@@ -54,7 +53,7 @@ Future<void> fetchCsv(double min, double limit, String ordered) async {
     options: Options(responseType: ResponseType.stream),
   );
 
-  final file = File('hashua.csv');
+  final file = File('dados.csv');
   final fileStream = file.openWrite();
 
   await for (final chunk in rs.data.stream) {
@@ -279,10 +278,9 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
 }
 
 Future<List<List<dynamic>>> processCsv(BuildContext context) async {
-  var result = await DefaultAssetBundle.of(context).loadString(
-    "dados_trator.csv",
-  );
+  var result = await File("dados.csv").readAsString();
   var csvList = const CsvToListConverter().convert(result, eol: "\n");
+  print("Printando csvList in 286: ${csvList}\n\n\n\n\n\n\n\n");
   return csvList;
 }
 
