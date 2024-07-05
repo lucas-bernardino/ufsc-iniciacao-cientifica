@@ -43,16 +43,18 @@ class MicResponse {
   }
 }
 
-Future<void> fetchCsv(double min, double limit, String ordered) async {
-  min *= 10;
+Future<void> fetchCsv(double min, String ordered) async {
+
   final API_URL = dotenv.env["API_URL"];
 
   final dio = Dio();
 
   final rs = await dio.get(
-    "${API_URL}/filter?min=$min&limit=${limit.toInt()}",
+    "${API_URL}/filter?min=$min&ordered=$ordered",
     options: Options(responseType: ResponseType.stream),
   );
+
+  print("Resposta do GET: ${rs.toString()}\n\n\n\n");
 
   final file = File('dados.csv');
   final fileStream = file.openWrite();
@@ -76,11 +78,9 @@ class _MicFilterState extends State<MicFilter> {
 
   late Future<MicResponse> futureAlbum;
   double _decibelsslidervalue = 40;
-  double _limitslidervalue = 0;
   double _ordenationslidervalue = 0;
 
   bool _decibels_flag = false;
-  bool _limit_flag = false;
   bool _ordenation_flag = false;
 
   final GlobalKey<SfCartesianChartState> _cartesianChartKey = GlobalKey();
@@ -127,29 +127,6 @@ class _MicFilterState extends State<MicFilter> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [ElevatedButton(onPressed: () => {setState(() {
-          _limit_flag = !_limit_flag;
-        })}, child: Text("Filtrar quantidade", style: TextStyle(color: Colors.lightBlue.shade900)))],),
-        Visibility(visible: _limit_flag, child: Column(children: [
-          SizedBox(height: 10,),
-          Text("Quantidade de dados", style: TextStyle(color: Colors.white)),
-          Slider(
-            activeColor: Colors.lightBlue.shade800,
-            value: _limitslidervalue,
-            max: 1000,
-            min: 0,
-            divisions: 20,
-            label: _limitslidervalue.round().toString(),
-            onChanged: (double value) {
-              setState(() {
-                _limitslidervalue = value;
-              });
-            },
-          )
-        ],)),
-        SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [ElevatedButton(onPressed: () => {setState(() {
             _ordenation_flag = !_ordenation_flag;
           })}, child: Text("Filtrar ordenação", style: TextStyle(color: Colors.lightBlue.shade900)))],),
         Visibility(visible: _ordenation_flag, child: Column(children: [
@@ -175,7 +152,7 @@ class _MicFilterState extends State<MicFilter> {
           children: [
             SizedBox(height: 10,),
             ElevatedButton(
-          onPressed: () { fetchCsv(_decibelsslidervalue, _limitslidervalue, _ordenationslidervalue == 0 ? "decibels" : "created_at"); },
+          onPressed: () { fetchCsv(_decibelsslidervalue, _ordenationslidervalue == 0 ? "decibels" : "created_at"); },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -191,7 +168,7 @@ class _MicFilterState extends State<MicFilter> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 return Visibility(
-                    visible: !_decibels_flag && !_limit_flag && !_ordenation_flag,
+                    visible: !_decibels_flag && !_ordenation_flag,
                     child: ChartImage(context, _cartesianChartKey, snapshot.data)
                 );
               } else {
