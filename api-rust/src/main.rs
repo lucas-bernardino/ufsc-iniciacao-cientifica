@@ -149,7 +149,9 @@ async fn send_email(url: &String) -> Result<(), Box<dyn std::error::Error + 'sta
         .header(ContentType::TEXT_PLAIN)
         .body(url.clone())?;
 
-    let password = std::env::var("GMAIL_PASSWORD")?.replace("_", " ");
+    let password = std::env::var("GMAIL_PASSWORD")
+        .expect("Missing GMAIL_PASSWORD in .env file!")
+        .replace("_", " ");
 
     let creds = Credentials::new("microfoneprojeto@gmail.com".to_owned(), password.to_owned());
 
