@@ -4,12 +4,8 @@ use axum::http::header;
 use axum::response::Response;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use csv::WriterBuilder;
-use lettre::message::header::ContentType;
-use lettre::transport::smtp::authentication::Credentials;
-use lettre::{Message, SmtpTransport, Transport};
 use std::process::{Command, Stdio};
 use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_stream::StreamExt;
 
 use tokio_util::io::{ReaderStream, StreamReader};
@@ -321,61 +317,4 @@ pub async fn last_data(
     let query_result = query.unwrap();
 
     Ok(Json(query_result))
-}
-
-async fn send_email(url: &str) -> Result<(), Box<dyn std::error::Error + 'static>> {
-    let email = Message::builder()
-        .from("microfoneprojeto@gmail.com".parse()?)
-        .to("microfoneprojeto@gmail.com".parse()?)
-        .subject("API")
-        .header(ContentType::TEXT_PLAIN)
-        .body(url.to_string())?;
-
-    let password = std::env::var("GMAIL_PASSWORD")?.replace("_", " ");
-
-    let creds = Credentials::new("microfoneprojeto@gmail.com".to_owned(), password.to_owned());
-
-    let mailer = SmtpTransport::relay("smtp.gmail.com")
-        .unwrap()
-        .credentials(creds)
-        .build();
-
-    match mailer.send(&email) {
-        Ok(_) => println!("Email sent successfully!"),
-        Err(e) => panic!("Could not send email: {e:?}"),
-    }
-
-    Ok(())
-}
-
-pub async fn handle_localhost_route() -> impl IntoResponse {
-    let init_command = tokio::process::Command::new("ssh")
-        .args(["-R", "80:localhost:3000", "ssh.localhost.run"])
-        .stdout(Stdio::piped())
-        .spawn();
-
-    let stdout = init_command.unwrap().stdout.take().unwrap();
-
-    let mut reader = BufReader::new(stdout).lines();
-
-    let mut url = String::new();
-
-    while let Some(line) = reader.next_line().await.unwrap() {
-        if line.contains("https") {
-            let remove_trash = line.trim().replace(" ", "");
-            let vec_url = remove_trash.split(",").collect::<Vec<_>>();
-            url = vec_url.get(1).unwrap().to_string();
-            break;
-        }
-    }
-
-    match send_email(url.as_str()).await {
-        Ok(()) => println!("Send email successfully in handle_localhost_route"),
-        Err(e) => println!(
-            "Error when sending the email in handle_localhost_route: {}",
-            e.to_string()
-        ),
-    };
-
-    Json(serde_json::json!({ "url": url }))
 }
