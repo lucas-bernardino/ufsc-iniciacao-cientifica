@@ -6,9 +6,8 @@ use tokio::sync::Mutex;
 use axum::{routing::get, routing::post, Router};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use tower_http::cors::{Any, CorsLayer};
 
-use tokio::io::{self, AsyncBufReadExt, BufReader};
+use tokio::io::{AsyncBufReadExt, BufReader};
 
 use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;

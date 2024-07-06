@@ -3,13 +3,13 @@ use axum::extract::{Path, Query, Request};
 use axum::http::header;
 use axum::response::Response;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
-use csv::{Writer, WriterBuilder};
+use csv::WriterBuilder;
 use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 use std::process::{Command, Stdio};
-use std::sync::{Arc, Mutex};
-use tokio::io::{self, AsyncBufReadExt, AsyncReadExt, BufReader};
+use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_stream::StreamExt;
 
 use tokio_util::io::{ReaderStream, StreamReader};
@@ -260,7 +260,7 @@ pub async fn list_videos() -> Response {
                 .wait_with_output()
                 .unwrap();
 
-            let ffprobe_output = String::from_utf8(ffprobe.stdout).unwrap();
+            let _ = String::from_utf8(ffprobe.stdout).unwrap();
 
             let du_output = String::from_utf8(du.stdout).unwrap();
             let size = du_output.split_whitespace().next().unwrap();
