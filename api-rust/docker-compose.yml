@@ -9,6 +9,19 @@ services:
       - progresDB:/var/lib/postgresql/data
     env_file:
       - ./.env
+    networks:
+      - mynetwork
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DATABASE_URL=postgresql://admin:password123@postgres:5432/rust_sqlx?schema=public
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
 
 volumes:
   progresDB:

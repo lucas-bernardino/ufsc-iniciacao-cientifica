@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO microphone ( decibels ) VALUES ( $1 )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Float4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e95ca58a9e0e96079629f7de64470c6ba4aae107f3eba634f6ad60c2a043d25a"
+}
