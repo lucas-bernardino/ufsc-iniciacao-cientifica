@@ -19,6 +19,8 @@ services:
         - DATABASE_URL=postgresql://admin:password123@postgres:5432/rust_sqlx?schema=public
     networks:
       - mynetwork
+    ports:
+      - 3000:3000
 
 networks:
   mynetwork:

@@ -14,6 +14,8 @@ RUN cargo install sqlx-cli --no-default-features --features postgres
 
 ENV SQLX_OFFLINE=true
 
+EXPOSE 3000
+
 RUN cargo build
 
 CMD cargo run
