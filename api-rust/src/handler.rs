@@ -232,22 +232,6 @@ pub async fn list_videos() -> Response {
         .lines()
         .map(|line| line.split_whitespace().last().unwrap())
         .for_each(|name| {
-            println!("Printing name: {:#?}", name);
-            let ffprobe = Command::new("ffprobe")
-                .args([
-                    "-i",
-                    name,
-                    "-show_entries",
-                    "format=duration",
-                    "-v",
-                    "quiet",
-                ])
-                .stdout(Stdio::piped())
-                .spawn()
-                .unwrap()
-                .wait_with_output()
-                .unwrap();
-
             let du = Command::new("du")
                 .args(["-h", name])
                 .stdout(Stdio::piped())
@@ -255,8 +239,6 @@ pub async fn list_videos() -> Response {
                 .unwrap()
                 .wait_with_output()
                 .unwrap();
-
-            let _ = String::from_utf8(ffprobe.stdout).unwrap();
 
             let du_output = String::from_utf8(du.stdout).unwrap();
             let size = du_output.split_whitespace().next().unwrap();
