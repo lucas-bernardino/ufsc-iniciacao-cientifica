@@ -18,4 +18,4 @@ EXPOSE 3000
 
 RUN cargo build
 
-CMD cargo run
+CMD cargo run --release --bin microfone-api
