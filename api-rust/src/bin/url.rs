@@ -3,17 +3,40 @@ use lettre::{
     message::header::ContentType, transport::smtp::authentication::Credentials, Message,
     SmtpTransport, Transport,
 };
+use std::process::{Command, Stdio};
 
-#[tokio::main]
-async fn main() {
+fn main() {
     dotenv().ok();
-
-    let url = String::from("umaurl");
-
-    send_email(&url).await.unwrap();
+    let url = get_url().unwrap();
+    println!("URL: {url}");
+    send_email(&url).unwrap();
 }
 
-async fn send_email(url: &String) -> Result<(), Box<dyn std::error::Error + 'static>> {
+fn get_url() -> Result<String, Box<dyn std::error::Error + 'static>> {
+    let zrok_release = Command::new("zrok")
+        .arg("overview")
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Failed to spawn zrok overview")
+        .wait_with_output()
+        .expect("Failed to get output from zrok overview");
+
+    let output = std::str::from_utf8(&zrok_release.stdout)
+        .expect("Problem occurred when getting zrok release output")
+        .replace(r"\", "");
+
+    let output_json: serde_json::Value = serde_json::from_str(output.as_str()).unwrap();
+
+    Ok(output_json["environments"][0]["shares"]
+        .clone()
+        .as_array()
+        .expect("Failed to get array out of urls")
+        .last()
+        .expect("Failed to get last element in array")["frontendEndpoint"]
+        .to_string())
+}
+
+fn send_email(url: &String) -> Result<(), Box<dyn std::error::Error + 'static>> {
     let email = Message::builder()
         .from("microfoneprojeto@gmail.com".parse()?)
         .to("microfoneprojeto@gmail.com".parse()?)
