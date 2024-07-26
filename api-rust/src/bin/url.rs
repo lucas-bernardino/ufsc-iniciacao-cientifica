@@ -27,7 +27,7 @@ fn get_url() -> Result<String, Box<dyn std::error::Error + 'static>> {
 
     let output_json: serde_json::Value = serde_json::from_str(output.as_str()).unwrap();
 
-    Ok(output_json["environments"][0]["shares"]
+    Ok(output_json["environments"][1]["shares"]
         .clone()
         .as_array()
         .expect("Failed to get array out of urls")
