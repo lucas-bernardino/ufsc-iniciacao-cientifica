@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for i in 1..100 {
         let mock_body = MockBody { decibels: i * 10 };
         let res = client
-            .post("https://5efbb7b2711874.lhr.life/create")
+            .post("http://localhost:3000/create")
             .json(&mock_body)
             .send()
             .await?;

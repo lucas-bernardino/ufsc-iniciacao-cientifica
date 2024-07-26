@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "TRUNCATE microphone",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "9d09e0c35418cb133bd807df69fa4a2b253cc75ca0fed4f86685584c1a5448d7"
+}
