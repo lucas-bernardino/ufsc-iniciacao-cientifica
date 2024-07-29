@@ -43,7 +43,11 @@ class MicResponse {
   }
 }
 
-Future<void> fetchCsv(double min, String ordered) async {
+Future<void> fetchCsv(double min, String ordered, bool downloadFlag) async {
+
+  if (!downloadFlag) {
+    return;
+  }
 
   final API_URL = dotenv.env["API_URL"];
 
@@ -82,6 +86,8 @@ class _MicFilterState extends State<MicFilter> {
 
   bool _decibels_flag = false;
   bool _ordenation_flag = false;
+
+  bool _download_flag = false;
 
   final GlobalKey<SfCartesianChartState> _cartesianChartKey = GlobalKey();
 
@@ -152,7 +158,11 @@ class _MicFilterState extends State<MicFilter> {
           children: [
             SizedBox(height: 10,),
             ElevatedButton(
-          onPressed: () { fetchCsv(_decibelsslidervalue, _ordenationslidervalue == 0 ? "decibels" : "created_at"); },
+          onPressed: () {
+            setState(() {_download_flag = true;});
+            processCsv(context, _decibelsslidervalue, _ordenationslidervalue == 0 ? "decibels" : "created_at", _download_flag);
+            setState(() {});
+            },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -164,7 +174,7 @@ class _MicFilterState extends State<MicFilter> {
         ),
         SizedBox(height: 20,),
         FutureBuilder(
-            future: processCsv(context),
+            future: processCsv(context, _decibelsslidervalue, _ordenationslidervalue == 0 ? "decibels" : "created_at", _download_flag),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 return Visibility(
@@ -192,6 +202,22 @@ class _MicFilterState extends State<MicFilter> {
   }
 }
 Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck, csvData) {
+  if (csvData == null) {
+    return Container (
+      child: Column(
+        children: [
+          CircularProgressIndicator(
+            color: Colors.lightBlue.shade800,
+          ),
+          const SizedBox(height: 10,),
+          const Text(
+              style: TextStyle(color: Colors.white),
+              "Faça o download do csv para visualizar o gráfico"
+          )
+        ],
+      ),
+    );
+  }
   List<DataPoints> _dataSource = [];
   for (var item in csvData.skip(1)) {
     double decibelsParsed = item[1] / 10;
@@ -256,7 +282,10 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
   );
 }
 
-Future<List<List<dynamic>>> processCsv(BuildContext context) async {
+Future<List<List<dynamic>>> processCsv(BuildContext context, double min, String ordered, bool downloadFlag) async {
+
+  await fetchCsv(min, ordered, downloadFlag);
+
   var result = await File("dados.csv").readAsString();
   var csvList = const CsvToListConverter().convert(result, eol: "\n");
   print("Printando csvList in 286: ${csvList}\n\n\n\n\n\n\n\n");
