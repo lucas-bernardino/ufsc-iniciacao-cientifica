@@ -58,8 +58,6 @@ Future<void> fetchCsv(double min, String ordered, bool downloadFlag) async {
     options: Options(responseType: ResponseType.stream),
   );
 
-  print("Resposta do GET: ${rs.toString()}\n\n\n\n");
-
   final file = File('dados.csv');
   final fileStream = file.openWrite();
 
@@ -288,7 +286,6 @@ Future<List<List<dynamic>>> processCsv(BuildContext context, double min, String 
 
   var result = await File("dados.csv").readAsString();
   var csvList = const CsvToListConverter().convert(result, eol: "\n");
-  print("Printando csvList in 286: ${csvList}\n\n\n\n\n\n\n\n");
   return csvList;
 }
 
