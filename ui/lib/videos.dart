@@ -23,9 +23,9 @@ class _VideosState extends State<Videos> {
   int numberOfVideos = 0;
   List<ListTile> _listTile = [];
 
-  Future<void> updateListTile() async {
+  Future<List<ListTile>> updateListTile(BuildContext context) async {
     var contents = await getListOfVideos();
-    var copy = _listTile;
+    _listTile = [];
     contents?.asMap().forEach((index, element) {
       var listTile = ListTile(
         key: Key(index.toString()),
@@ -33,13 +33,9 @@ class _VideosState extends State<Videos> {
         title: Text(element.name, style: TextStyle(color: Colors.white),),
         trailing: IconButton(onPressed: () {downloadVideo(index);}, icon: const Icon(Icons.download, color: Colors.white,),),
       );
-      if (!copy.contains(listTile)) {
-        copy.add(listTile);
-      }
+      _listTile.add(listTile);
     });
-    setState(() {
-      _listTile = copy;
-    });
+    return _listTile;
   }
 
 
@@ -49,11 +45,25 @@ class _VideosState extends State<Videos> {
       backgroundColor: Colors.transparent,
       body: Column(
         children: [
-          IconButton(onPressed: () {updateListTile();}, icon: Icon(Icons.refresh, color: Colors.white,)),
-          ListView(
-          shrinkWrap: true,
-          children: _listTile,
-        ),],
+          IconButton(onPressed: () {
+            updateListTile(context);
+            setState(() {});
+            },
+            icon: Icon(Icons.refresh, color: Colors.white,)
+          ),
+          FutureBuilder(
+          future: updateListTile(context),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return ListView(
+                  shrinkWrap: true,
+                  children: _listTile,
+              );
+            } else {
+              return const CircularProgressIndicator();
+            }
+          }),
+        ],
       )
     );
   }
@@ -118,7 +128,6 @@ Future<void> downloadVideo(int video_number) async {
 
   await fileStream.close();
 
-  print('Video downloaded successfully!');
 }
 
 
