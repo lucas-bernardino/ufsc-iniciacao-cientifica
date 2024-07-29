@@ -54,6 +54,7 @@ def get_email():
 
 def change_env_variables():
     url = get_email()
+    print(f"Utilizando a url: ", url)
     with open(".env", "r+") as f:
         untouchable = f.readlines()[1].rstrip()
         text_to_write = f"API_URL={url}\n{untouchable}"
