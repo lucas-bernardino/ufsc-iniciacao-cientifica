@@ -84,8 +84,10 @@ class _MicFilterState extends State<MicFilter> {
 
   bool _decibels_flag = false;
   bool _ordenation_flag = false;
-
   bool _download_flag = false;
+
+  final List<bool> _selectedToggleOptions = <bool>[true, false];
+
 
   final GlobalKey<SfCartesianChartState> _cartesianChartKey = GlobalKey();
 
@@ -134,23 +136,34 @@ class _MicFilterState extends State<MicFilter> {
             _ordenation_flag = !_ordenation_flag;
           })}, child: Text("Filtrar ordenação", style: TextStyle(color: Colors.lightBlue.shade900)))],),
         Visibility(visible: _ordenation_flag, child: Column(children: [
-          SizedBox(height: 10,),
-          Text("Ordenação decrescente", style: TextStyle(color: Colors.white)),
-          Slider(
-            activeColor: Colors.lightBlue.shade800,
-            value: _ordenationslidervalue,
-            max: 1,
-            min: 0,
-            divisions: 1,
-            label: _ordenationslidervalue == 0 ? "Decibéis" : "Data de Criação",
-            onChanged: (double value) {
+          SizedBox(height: 20,),
+          // ????? Text("Ordenação decrescente", style: TextStyle(color: Colors.white)),
+          ToggleButtons(
+            direction: Axis.horizontal,
+            onPressed: (int index) {
               setState(() {
-                _ordenationslidervalue = value;
+                for (int i = 0; i < _selectedToggleOptions.length; i++) {
+                  _selectedToggleOptions[i] = i == index;
+                }
+                _ordenationslidervalue = index.toDouble();
               });
             },
-          )
-        ],))
-        ,
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
+            selectedBorderColor: Colors.lightBlue.shade400,
+            selectedColor: Colors.white,
+            fillColor: Colors.lightBlue.shade800,
+            color: Colors.white,
+            constraints: const BoxConstraints(
+              minHeight: 40.0,
+              minWidth: 120.0,
+            ),
+            isSelected: _selectedToggleOptions,
+            children: const [
+              Text("Decibéis"),
+              Text("Data de Criação")
+            ],
+          ),
+        ],)),
         SizedBox(height: 20,),
         Column(
           children: [
@@ -158,7 +171,7 @@ class _MicFilterState extends State<MicFilter> {
             ElevatedButton(
           onPressed: () {
             setState(() {_download_flag = true;});
-            processCsv(context, _decibelsslidervalue, _ordenationslidervalue == 0 ? "decibels" : "created_at", _download_flag);
+            processCsv(context, _decibelsslidervalue, _ordenationslidervalue == 0.0 ? "decibels" : "created_at", _download_flag);
             setState(() {});
             },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
@@ -172,7 +185,7 @@ class _MicFilterState extends State<MicFilter> {
         ),
         SizedBox(height: 20,),
         FutureBuilder(
-            future: processCsv(context, _decibelsslidervalue, _ordenationslidervalue == 0 ? "decibels" : "created_at", _download_flag),
+            future: processCsv(context, _decibelsslidervalue, _ordenationslidervalue == 0.0 ? "decibels" : "created_at", _download_flag),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 return Visibility(
