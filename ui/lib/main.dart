@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:ui/chart.dart';
 import 'package:ui/filter.dart';
+import 'package:ui/home.dart';
 import 'package:ui/videos.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -20,20 +21,27 @@ class NavigationRailExampleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: NavRailExample(),
+      home: NavRailExample(pageIndex: 0,),
     );
   }
 }
 
 class NavRailExample extends StatefulWidget {
-  const NavRailExample({super.key});
+
+  final int pageIndex;
+
+  const NavRailExample({super.key, required this.pageIndex});
 
   @override
-  State<NavRailExample> createState() => _NavRailExampleState();
+  State<NavRailExample> createState() => _NavRailExampleState(selectedIndex: pageIndex);
 }
 
 class _NavRailExampleState extends State<NavRailExample> {
-  int _selectedIndex = 0;
+
+  int selectedIndex = 0;
+
+  _NavRailExampleState({required this.selectedIndex});
+
   NavigationRailLabelType labelType = NavigationRailLabelType.all;
   bool showLeading = false;
   bool showTrailing = false;
@@ -48,11 +56,11 @@ class _NavRailExampleState extends State<NavRailExample> {
         children: <Widget>[
           NavigationRail(
             backgroundColor: Colors.blueGrey.shade900,
-            selectedIndex: _selectedIndex,
+            selectedIndex: selectedIndex,
             groupAlignment: groupAlignment,
             onDestinationSelected: (int index) {
               setState(() {
-                _selectedIndex = index;
+                selectedIndex = index;
               });
             },
             labelType: NavigationRailLabelType.selected,
@@ -74,6 +82,10 @@ class _NavRailExampleState extends State<NavRailExample> {
             )
                 : const SizedBox(),
             destinations: <NavigationRailDestination>[
+              NavigationRailDestination(
+                icon: Icon(Icons.home, color: Colors.lightBlue.shade800),
+                label: const Text('Home', style: TextStyle(color: Colors.white)),
+              ),
               NavigationRailDestination(
                 icon: Icon(Icons.insert_chart, color: Colors.lightBlue.shade800),
                 label: const Text('Gráficos', style: TextStyle(color: Colors.white)),
@@ -102,19 +114,23 @@ class _NavRailExampleState extends State<NavRailExample> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  if (_selectedIndex == 0)
+                  if (selectedIndex == 0)
+                    const Center(
+                        child: Home()
+                    ),
+                  if (selectedIndex == 1)
                     const SizedBox(
                         height: 800,
                         width: 1500,
                         child: MicChart()
                     ),
-                  if (_selectedIndex == 1)
+                  if (selectedIndex == 2)
                      const SizedBox(
                       height: 800,
                       width: 1500,
                       child: Videos()
                       ),
-                  if (_selectedIndex == 2)
+                  if (selectedIndex == 3)
                     const SizedBox(
                       height: 600,
                       width: 900,
