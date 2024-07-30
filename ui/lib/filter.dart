@@ -170,7 +170,9 @@ class _MicFilterState extends State<MicFilter> {
             SizedBox(height: 10,),
             ElevatedButton(
           onPressed: () {
-            setState(() {_download_flag = true;});
+            setState(() {
+              _download_flag = true;
+            });
             processCsv(context, _decibelsslidervalue, _ordenationslidervalue == 0.0 ? "decibels" : "created_at", _download_flag);
             setState(() {});
             },
@@ -197,17 +199,7 @@ class _MicFilterState extends State<MicFilter> {
               }
             }),
         SizedBox(height: 10,),
-            ElevatedButton(
-          onPressed: () { _renderChartAsImage(_cartesianChartKey); },
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.download, color: Colors.white,),
-              Text("Gerar imagem", style: TextStyle(color: Colors.white),)
-            ],
-          ),
-        )],)
+          ],)
       ],),
     );
   }
@@ -236,58 +228,73 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
     _dataSource.add(DataPoints(timestampParsed, decibelsParsed));
   }
   return Container(
-    child: SfCartesianChart(
-      title: const ChartTitle(
-        text: "Decibéis ao longo do tempo",
-        textStyle: TextStyle(
-          color: Colors.white,
-          fontFamily: 'Roboto',
-          fontStyle: FontStyle.italic,
-          fontSize: 14,
-        ),
-      ),
-      enableAxisAnimation: true,
-      tooltipBehavior: TooltipBehavior(
-        color: Colors.lightBlue.shade400,
-        enable: true,
-        borderColor: Colors.deepOrange,
-        borderWidth: 2,
-        header: "",
-      ),
-      zoomPanBehavior: ZoomPanBehavior(
-        enablePanning: true,
-        enableMouseWheelZooming: true,
-        enablePinching: true,
-      ),
-      key: cck,
-      // Initialize category axis (e.g., x-axis)
-      primaryXAxis: const CategoryAxis(
-          labelStyle: TextStyle(
+    child: Column(
+      children: [
+        SfCartesianChart(
+          title: const ChartTitle(
+            text: "Decibéis ao longo do tempo",
+            textStyle: TextStyle(
               color: Colors.white,
               fontFamily: 'Roboto',
-              fontSize: 14,
               fontStyle: FontStyle.italic,
-              fontWeight: FontWeight.w500
-          )
-      ),
-      primaryYAxis: const NumericAxis(
-          minimum: 45,
-          labelStyle: TextStyle(
-              color: Colors.white,
-              fontFamily: 'Roboto',
               fontSize: 14,
-              fontStyle: FontStyle.italic,
-              fontWeight: FontWeight.w500
-          )
-      ),
-      series: <ColumnSeries<DataPoints, String>>[
-        // Initialize line series with data points
-        ColumnSeries<DataPoints, String>(
-          color: Colors.lightBlue,
-          dataSource: _dataSource,
-          xValueMapper: (DataPoints value, _) => value.x,
-          yValueMapper: (DataPoints value, _) => value.y,
+            ),
+          ),
+          enableAxisAnimation: true,
+          tooltipBehavior: TooltipBehavior(
+            color: Colors.lightBlue.shade400,
+            enable: true,
+            borderColor: Colors.deepOrange,
+            borderWidth: 2,
+            header: "",
+          ),
+          zoomPanBehavior: ZoomPanBehavior(
+            enablePanning: true,
+            enableMouseWheelZooming: true,
+            enablePinching: true,
+          ),
+          key: cck,
+          // Initialize category axis (e.g., x-axis)
+          primaryXAxis: const CategoryAxis(
+              labelStyle: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Roboto',
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w500
+              )
+          ),
+          primaryYAxis: const NumericAxis(
+              minimum: 45,
+              labelStyle: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Roboto',
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w500
+              )
+          ),
+          series: <ColumnSeries<DataPoints, String>>[
+            // Initialize line series with data points
+            ColumnSeries<DataPoints, String>(
+              color: Colors.lightBlue,
+              dataSource: _dataSource,
+              xValueMapper: (DataPoints value, _) => value.x,
+              yValueMapper: (DataPoints value, _) => value.y,
+            ),
+          ],
         ),
+        ElevatedButton(
+          onPressed: () { _renderChartAsImage(cck); },
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue.shade800),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.download, color: Colors.white,),
+              Text("Gerar imagem", style: TextStyle(color: Colors.white),)
+            ],
+          ),
+        )
       ],
     ),
   );
