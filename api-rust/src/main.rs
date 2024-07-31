@@ -1,6 +1,10 @@
 use std::{sync::Arc, u16};
 
 use axum::extract::State;
+use socketioxide::{
+    extract::{Data, SocketRef},
+    SocketIo,
+};
 use tokio::sync::Mutex;
 
 use axum::{
@@ -15,6 +19,8 @@ use axum::{
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::net::SocketAddr;
+use tracing::info;
+use tracing_subscriber::FmtSubscriber;
 
 #[derive(Default, Debug)]
 struct SocketCommunication {
@@ -52,6 +58,8 @@ use crate::handler::{
 
 #[tokio::main]
 async fn main() {
+    tracing::subscriber::set_global_default(FmtSubscriber::default()).unwrap();
+
     dotenv().ok();
 
     let database_url = std::env::var("DATABASE_URL").expect("Missing DATABASE_URL in .env");
@@ -76,6 +84,10 @@ async fn main() {
         socket_communication: Arc::new(Mutex::new(SocketCommunication::default())),
     });
 
+    let (layer, io) = SocketIo::new_layer();
+
+    io.ns("/", socket_handler);
+
     let app = Router::new()
         .route("/", get(|| async { "Running" }))
         .route("/create", post(create_microphone_handler))
@@ -89,6 +101,7 @@ async fn main() {
         .route("/last", get(last_data))
         .route("/ws/microphone", get(socket_mic))
         .route("/ws/flutter", get(socket_flu))
+        .layer(layer)
         .with_state(app_state);
 
     println!("Server running sucessfully on port 3000 ✅");
@@ -100,6 +113,18 @@ async fn main() {
     )
     .await
     .unwrap();
+}
+
+async fn socket_handler(socket: SocketRef) {
+    println!("conectaram mermao");
+    info!("Socket.IO connected: {:?} {:?}", socket.ns(), socket.id);
+    //socket.emit("messsage", "emitando").ok();
+
+    socket.on("message", |socket: SocketRef, Data::<String>(data)| {
+        println!("Received a test message {:?}", data);
+        socket.emit("message", "oi").ok(); // Emit a message to the client
+        let _ = socket.broadcast().emit("message", "para todos").ok();
+    });
 }
 
 async fn socket_mic(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) -> Response {
