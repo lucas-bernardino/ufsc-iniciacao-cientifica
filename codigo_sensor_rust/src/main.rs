@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let decibels_value = ( sensor_data[0] + sensor_data[1] ) / 2;
 
         let body = Body { decibels: decibels_value };
-        /*
+        
         let res = server.post("http://localhost:3000/create")
             .json(&body)
             .send()
@@ -124,9 +124,20 @@ fn stop_recording(ffmpeg_pid: u32) -> Result<(), Box<dyn std::error::Error>> {
 
 async fn post_video(server: &reqwest::Client) -> Result<(), Box<dyn std::error::Error>> {
 
-    println!("Inside of post_video!");
+    let file = match tokio::fs::File::open("out.mkv").await {
+        Ok(f) => f,
+        Err(e) => match e.kind() {
+            std::io::ErrorKind::NotFound => {
+                std::thread::sleep(std::time::Duration::from_secs(3));
+                println!("Vou deletar o arquivo");
+                tokio::fs::remove_file("out.mkv").await.unwrap();
+                println!("Deletei");
+                return Ok(());
+            }
+            _ => return Err(e)?,
+        },
 
-    let file = tokio::fs::File::open("out.mkv").await.unwrap();
+    };
 
     let stream = ReaderStream::new(file);
 
