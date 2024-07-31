@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, u16};
 
 use axum::extract::State;
 use tokio::sync::Mutex;
@@ -21,6 +21,8 @@ struct SocketCommunication {
     microphone_message: String,
     flutter_message: String,
     new_message: bool,
+    min_recording: u16,
+    max_recording: u16,
 }
 
 impl SocketCommunication {
@@ -105,25 +107,15 @@ async fn socket_mic(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) ->
 }
 
 async fn socket_mic_handler(mut socket: WebSocket, state: Arc<AppState>) {
-    while let Some(msg) = socket.recv().await {
-        let msg = if let Ok(msg) = msg {
-            msg
-        } else {
-            // client disconnected
-            return;
-        };
-
-        if msg.to_text().unwrap() == "microphone_init" {
-            let mut sock_comm = state.socket_communication.lock().await;
-            sock_comm.update_mic_msg(msg.to_text().unwrap().to_string());
-            sock_comm.new_message = true;
-        }
-
-        println!("Data - {}", msg.to_text().unwrap());
-
-        if socket.send(msg.clone()).await.is_err() {
-            // client disconnected
-            return;
+    loop {
+        let mut sock_comm = state.socket_communication.lock().await;
+        if sock_comm.new_message {
+            let msg_format = format!(
+                "New params have been sent from flutter\nMin - {}\nMax - {}",
+                sock_comm.min_recording, sock_comm.max_recording
+            );
+            socket.send(Message::Text(msg_format)).await.unwrap();
+            sock_comm.new_message = false;
         }
     }
 }
@@ -133,32 +125,34 @@ async fn socket_flu(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) ->
 }
 
 async fn socket_flu_handler(mut socket: WebSocket, state: Arc<AppState>) {
-    while let Some(msg) = socket.recv().await {
-        let msg = if let Ok(msg) = msg {
-            msg
-        } else {
-            // client disconnected
-            return;
-        };
-
-        let mut sock_comm = state.socket_communication.lock().await;
-
-        if msg.to_text().unwrap() == "flutter_init" {
-            sock_comm.update_flutter_msg(msg.to_text().unwrap().to_string());
-        }
-
-        if sock_comm.new_message {
+    loop {
+        let msg_recv = socket.recv().await.unwrap().unwrap();
+        let parse_msg = msg_recv
+            .to_text()
+            .unwrap()
+            .split(",")
+            .collect::<Vec<&str>>();
+        if parse_msg.get(0).unwrap().to_string() == "set" {
+            let mut sock_comm = state.socket_communication.lock().await;
+            sock_comm.min_recording = parse_msg
+                .get(1)
+                .unwrap()
+                .replace("min:", "")
+                .parse::<u16>()
+                .unwrap();
+            sock_comm.max_recording = parse_msg
+                .get(2)
+                .unwrap()
+                .replace("max:", "")
+                .parse::<u16>()
+                .unwrap();
+            sock_comm.new_message = true;
             socket
-                .send(Message::Text("O CARA JA DEU O FLUTTER_INIT".to_string()))
+                .send(Message::Text(
+                    "Sucessfully received and set new params in socket_flu_handler".to_string(),
+                ))
                 .await
                 .unwrap();
-        }
-
-        println!("Data - {}", msg.to_text().unwrap());
-
-        if socket.send(msg.clone()).await.is_err() {
-            // client disconnected
-            return;
         }
     }
 }
