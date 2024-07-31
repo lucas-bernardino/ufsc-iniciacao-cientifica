@@ -1,6 +1,10 @@
+use rust_socketio::{
+    asynchronous::{Client, ClientBuilder},
+    Payload,
+};
 use serde::{Deserialize, Serialize};
 
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{FutureExt, SinkExt, StreamExt};
 use tokio_tungstenite::{self, tungstenite::Message};
 #[derive(Debug, Deserialize, Serialize)]
 struct MockBody {
@@ -14,15 +18,29 @@ struct MockBody {
 #[allow(unreachable_code)]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
-    let (mut ws_stream, _) =
-        tokio_tungstenite::connect_async("ws://127.0.0.1:3000/ws/microphone").await?;
-    tokio::spawn(async move {
-        loop {
-            if let Some(msg) = ws_stream.next().await {
-                println!("Received message: {}", msg.unwrap().to_text().unwrap());
+    let callback = |payload: Payload, socket: Client| {
+        async move {
+            match payload {
+                Payload::Text(str) => println!("Received: {:#?}", str),
+                Payload::Binary(bin_data) => println!("Received bytes: {:#?}", bin_data),
+                _ => println!("Outro"),
             }
+            //socket
+            //    .emit("message", "risos")
+            //    .await
+            //    .expect("Server unreachable")
         }
-    });
+        .boxed()
+    };
+    let socket = ClientBuilder::new("http://127.0.0.1:3000")
+        .namespace("")
+        .on("message", callback)
+        .connect()
+        .await
+        .expect("Connection failed");
+
+    std::thread::sleep(std::time::Duration::from_secs(3));
+    socket.emit("message", "mic").await.unwrap();
     loop {
         for i in 1..100 {
             let mock_body = MockBody { decibels: i * 10 };
