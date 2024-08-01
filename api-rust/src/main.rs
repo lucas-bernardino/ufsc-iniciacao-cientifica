@@ -1,6 +1,5 @@
 use std::{sync::Arc, u16};
 
-use axum::extract::State;
 use socketioxide::{
     extract::{Data, SocketRef},
     SocketIo,
@@ -8,11 +7,6 @@ use socketioxide::{
 use tokio::sync::Mutex;
 
 use axum::{
-    extract::{
-        ws::{self, Message, WebSocket},
-        WebSocketUpgrade,
-    },
-    response::Response,
     routing::{get, post},
     Router,
 };
@@ -22,30 +16,10 @@ use std::net::SocketAddr;
 use tracing::info;
 use tracing_subscriber::FmtSubscriber;
 
-#[derive(Default, Debug)]
-struct SocketCommunication {
-    microphone_message: String,
-    flutter_message: String,
-    new_message: bool,
-    min_recording: u16,
-    max_recording: u16,
-}
-
-impl SocketCommunication {
-    fn update_mic_msg(&mut self, new_mic_message: String) {
-        self.microphone_message = new_mic_message;
-    }
-
-    fn update_flutter_msg(&mut self, new_flutter_message: String) {
-        self.flutter_message = new_flutter_message;
-    }
-}
-
 #[derive(Clone)]
 pub struct AppState {
     db: Pool<Postgres>,
     file_count: Arc<Mutex<u16>>,
-    socket_communication: Arc<Mutex<SocketCommunication>>,
 }
 
 mod handler;
@@ -81,7 +55,6 @@ async fn main() {
     let app_state = Arc::new(AppState {
         db: pool.clone(),
         file_count: Arc::new(Mutex::new(0)),
-        socket_communication: Arc::new(Mutex::new(SocketCommunication::default())),
     });
 
     let (layer, io) = SocketIo::new_layer();
@@ -99,8 +72,6 @@ async fn main() {
         .route("/list", get(list_videos))
         .route("/download/video/:id", get(download_by_id))
         .route("/last", get(last_data))
-        .route("/ws/microphone", get(socket_mic))
-        .route("/ws/flutter", get(socket_flu))
         .layer(layer)
         .with_state(app_state);
 
@@ -116,68 +87,32 @@ async fn main() {
 }
 
 async fn socket_handler(socket: SocketRef) {
-    println!("conectaram mermao");
     info!("Socket.IO connected: {:?} {:?}", socket.ns(), socket.id);
-    //socket.emit("messsage", "emitando").ok();
 
-    socket.on("message", |socket: SocketRef, Data::<String>(data)| {
-        println!("Received a test message {:?}", data);
-        socket.emit("message", "oi").ok(); // Emit a message to the client
-        let _ = socket.broadcast().emit("message", "para todos").ok();
+    socket.on("update", |socket: SocketRef, Data::<String>(data)| {
+        let parsed_data = data.split(",").collect::<Vec<&str>>();
+        let min = parsed_data.get(0);
+        let max = parsed_data.get(1);
+        if min.is_none() || max.is_none() {
+            emit_invalid_format_error(&socket);
+            return;
+        }
+        let min = min.unwrap().replace("min:", "").parse::<u16>();
+        let max = max.unwrap().replace("max:", "").parse::<u16>();
+        if min.is_err() || max.is_err() {
+            emit_invalid_format_error(&socket);
+            return;
+        }
+
+        let _ = socket.broadcast().emit("update", data).ok();
     });
 }
 
-async fn socket_mic(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) -> Response {
-    ws.on_upgrade(move |socket| socket_mic_handler(socket, state))
-}
-
-async fn socket_mic_handler(mut socket: WebSocket, state: Arc<AppState>) {
-    loop {
-        let mut sock_comm = state.socket_communication.lock().await;
-        if sock_comm.new_message {
-            let msg_format = format!(
-                "New params have been sent from flutter\nMin - {}\nMax - {}",
-                sock_comm.min_recording, sock_comm.max_recording
-            );
-            socket.send(Message::Text(msg_format)).await.unwrap();
-            sock_comm.new_message = false;
-        }
-    }
-}
-
-async fn socket_flu(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) -> Response {
-    ws.on_upgrade(move |socket| socket_flu_handler(socket, state))
-}
-
-async fn socket_flu_handler(mut socket: WebSocket, state: Arc<AppState>) {
-    loop {
-        let msg_recv = socket.recv().await.unwrap().unwrap();
-        let parse_msg = msg_recv
-            .to_text()
-            .unwrap()
-            .split(",")
-            .collect::<Vec<&str>>();
-        if parse_msg.get(0).unwrap().to_string() == "set" {
-            let mut sock_comm = state.socket_communication.lock().await;
-            sock_comm.min_recording = parse_msg
-                .get(1)
-                .unwrap()
-                .replace("min:", "")
-                .parse::<u16>()
-                .unwrap();
-            sock_comm.max_recording = parse_msg
-                .get(2)
-                .unwrap()
-                .replace("max:", "")
-                .parse::<u16>()
-                .unwrap();
-            sock_comm.new_message = true;
-            socket
-                .send(Message::Text(
-                    "Sucessfully received and set new params in socket_flu_handler".to_string(),
-                ))
-                .await
-                .unwrap();
-        }
-    }
+fn emit_invalid_format_error(socket: &SocketRef) {
+    socket
+        .emit(
+            "update",
+            "Invalid data format. Should be 'min:<value>,max:<value>'",
+        )
+        .unwrap();
 }
