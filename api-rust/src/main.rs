@@ -13,8 +13,6 @@ use axum::{
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::net::SocketAddr;
-use tracing::info;
-use tracing_subscriber::FmtSubscriber;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -32,8 +30,6 @@ use crate::handler::{
 
 #[tokio::main]
 async fn main() {
-    tracing::subscriber::set_global_default(FmtSubscriber::default()).unwrap();
-
     dotenv().ok();
 
     let database_url = std::env::var("DATABASE_URL").expect("Missing DATABASE_URL in .env");
@@ -87,9 +83,11 @@ async fn main() {
 }
 
 async fn socket_handler(socket: SocketRef) {
-    info!("Socket.IO connected: {:?} {:?}", socket.ns(), socket.id);
+    println!("Socket.IO connected: {:?} {:?}", socket.ns(), socket.id);
 
     socket.on("update", |socket: SocketRef, Data::<String>(data)| {
+        let data = data.trim_matches('"');
+        println!("Received: {data}\n");
         let parsed_data = data.split(",").collect::<Vec<&str>>();
         let min = parsed_data.get(0);
         let max = parsed_data.get(1);
