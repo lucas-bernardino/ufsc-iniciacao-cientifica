@@ -61,6 +61,7 @@ class _MicChart extends State<MicChart> {
         body: Center(
             child: Container(
                 child: SfCartesianChart(
+                    plotAreaBackgroundColor: Colors.transparent,
                     title: const ChartTitle(
                       text: "Decibéis em tempo real",
                       textStyle: TextStyle(
@@ -79,6 +80,7 @@ class _MicChart extends State<MicChart> {
                       header: "",
                     ),
                     primaryXAxis: const CategoryAxis(
+                        majorGridLines: const MajorGridLines(width: 0),
                         labelStyle: TextStyle(
                             color: Colors.white,
                             fontFamily: 'Roboto',
@@ -88,6 +90,7 @@ class _MicChart extends State<MicChart> {
                         )
                     ),
                     primaryYAxis: const NumericAxis(
+                        majorGridLines: const MajorGridLines(width: 0),
                         labelStyle: TextStyle(
                             color: Colors.white,
                             fontFamily: 'Roboto',
@@ -96,13 +99,12 @@ class _MicChart extends State<MicChart> {
                             fontWeight: FontWeight.w500
                         )
                     ),
-                    plotAreaBackgroundColor: Colors.teal[100],
                     series: <CartesianSeries>[
                       // Renders line chart
                       LineSeries<MicData, DateTime>(
                           onRendererCreated: (ChartSeriesController controller) {
-                          chartSeriesController_ = controller;
-                        },
+                            chartSeriesController_ = controller;
+                          },
                           color: Colors.lightBlue.shade900,
                           width: 3.5,
                           dataSource: chartData,
