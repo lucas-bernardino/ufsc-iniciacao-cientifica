@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use rust_socketio::{
     asynchronous::{Client, ClientBuilder},
     Payload,
@@ -18,7 +20,17 @@ struct MockBody {
 #[allow(unreachable_code)]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
-    let callback = |payload: Payload, socket: Client| {
+
+    let mut min_decibeis = Arc::new(tokio::sync::Mutex::new(10));
+    let mut max_decibeis = Arc::new(tokio::sync::Mutex::new(30));
+
+    let min_decibeis_cloned = Arc::clone(&min_decibeis);
+    let max_decibeis_cloned = Arc::clone(&max_decibeis);
+
+    let callback = move |payload: Payload, socket: Client| {
+        let min_cloned = Arc::clone(&min_decibeis_cloned);
+        let max_cloned = Arc::clone(&max_decibeis_cloned);
+
         async move {
             let mut data = String::from("");
             match payload {
@@ -40,6 +52,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .parse::<u16>()
                 .unwrap();
             println!("Sucessfully got: {} and {}", min, max);
+            *min_cloned.lock().await = min;
+            *max_cloned.lock().await = max;
         }
         .boxed()
     };
@@ -49,8 +63,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .connect()
         .await
         .expect("Connection failed");
-
     std::thread::sleep(std::time::Duration::from_secs(3));
+
     loop {
         for i in 1..100 {
             let mock_body = MockBody { decibels: i * 10 };
@@ -61,8 +75,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .await?;
             std::thread::sleep(std::time::Duration::from_secs(1));
             println!(
-                "Sending request to server with the following body: {}",
-                mock_body.decibels
+                "Sending request to server with the following body: {}. Min - {} and Max - {}",
+                mock_body.decibels,
+                min_decibeis.lock().await,
+                max_decibeis.lock().await
             );
         }
     }
