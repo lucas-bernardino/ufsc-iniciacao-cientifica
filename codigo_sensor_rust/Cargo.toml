@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+futures-util = { version = "0.3.30", features = ["sink"] }
+rust_socketio = { version = "0.6.0", features = ["async"] }
 reqwest = {version = "0.12.2", features = ["blocking", "json", "stream"] }
 serde = {version = "1.0.197", features = ["derive"]}
 tokio = {version = "1.36.0", features = ["full"]}

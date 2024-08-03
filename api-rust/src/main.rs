@@ -1,10 +1,18 @@
-use std::sync::Arc;
+use std::{sync::Arc, u16};
 
+use socketioxide::{
+    extract::{Data, SocketRef},
+    SocketIo,
+};
 use tokio::sync::Mutex;
 
-use axum::{routing::get, routing::post, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use std::net::SocketAddr;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -45,6 +53,10 @@ async fn main() {
         file_count: Arc::new(Mutex::new(0)),
     });
 
+    let (layer, io) = SocketIo::new_layer();
+
+    io.ns("/", socket_handler);
+
     let app = Router::new()
         .route("/", get(|| async { "Running" }))
         .route("/create", post(create_microphone_handler))
@@ -56,10 +68,49 @@ async fn main() {
         .route("/list", get(list_videos))
         .route("/download/video/:id", get(download_by_id))
         .route("/last", get(last_data))
+        .layer(layer)
         .with_state(app_state);
 
     println!("Server running sucessfully on port 3000 ✅");
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
+}
+
+async fn socket_handler(socket: SocketRef) {
+    println!("Socket.IO connected: {:?} {:?}", socket.ns(), socket.id);
+
+    socket.on("update", |socket: SocketRef, Data::<String>(data)| {
+        let data = data.trim_matches('"');
+        println!("Received: {data}\n");
+        let parsed_data = data.split(",").collect::<Vec<&str>>();
+        let min = parsed_data.get(0);
+        let max = parsed_data.get(1);
+        if min.is_none() || max.is_none() {
+            emit_invalid_format_error(&socket);
+            return;
+        }
+        let min = min.unwrap().replace("min:", "").parse::<u16>();
+        let max = max.unwrap().replace("max:", "").parse::<u16>();
+        if min.is_err() || max.is_err() {
+            emit_invalid_format_error(&socket);
+            return;
+        }
+
+        let _ = socket.broadcast().emit("update", data).ok();
+    });
+}
+
+fn emit_invalid_format_error(socket: &SocketRef) {
+    socket
+        .emit(
+            "update",
+            "Invalid data format. Should be 'min:<value>,max:<value>'",
+        )
+        .unwrap();
 }

@@ -55,7 +55,7 @@ class _NavRailExampleState extends State<NavRailExample> {
       body: Row(
         children: <Widget>[
           NavigationRail(
-            backgroundColor: Colors.blueGrey.shade900,
+            backgroundColor: Color(0xEE000000),
             selectedIndex: selectedIndex,
             groupAlignment: groupAlignment,
             onDestinationSelected: (int index) {
@@ -105,11 +105,7 @@ class _NavRailExampleState extends State<NavRailExample> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [Colors.blueGrey.shade900, Colors.blueGrey.shade600, Colors.blueGrey.shade900]
-                  )
+                  color: Colors.black87
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
