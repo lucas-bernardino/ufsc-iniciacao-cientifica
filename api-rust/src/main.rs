@@ -108,8 +108,8 @@ async fn socket_handler(socket: SocketRef) {
     });
 
     socket.on("status", |socket: SocketRef, Data::<String>(data)| {
-        if data.clone().contains("current") {
-            socket.broadcast().emit("status", data.clone()).ok();
+        if data.contains("current") {
+            socket.broadcast().emit("status", data).ok();
             return;
         }
         match data.as_str() {
