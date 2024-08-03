@@ -74,13 +74,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 _ => {}
             }
             let data = data.trim_matches('"');
-            println!("Rasp received: {data}");
             match data {
+                "info" => {
+                    socket.emit("status", format!("current:{}", *status_cloned.lock().await)).await.expect("Server unreachable");
+                }
                 "send" => {*status_cloned.lock().await = true;}
                 "stop" => {*status_cloned.lock().await = false;}
                 _ => {}
             }
-            println!("I have just updated the status. New value: {}", *status_cloned.lock().await);
         }
         .boxed()
     };

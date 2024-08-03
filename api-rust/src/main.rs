@@ -12,6 +12,8 @@ use axum::{
 };
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+//use tokio_stream::StreamExt;
+use futures_util::StreamExt;
 use std::net::SocketAddr;
 
 #[derive(Clone)]
@@ -105,8 +107,13 @@ async fn socket_handler(socket: SocketRef) {
         let _ = socket.broadcast().emit("update", data).ok();
     });
 
-    socket.on("status", |socket: SocketRef, Data::<String>(data)|{
+    socket.on("status", |socket: SocketRef, Data::<String>(data)| {
+        if data.clone().contains("current") {
+            socket.broadcast().emit("status", data.clone()).ok();
+            return;
+        }
         match data.as_str() {
+            "info" => {}
             "send" => {}, 
             "stop" => {},
             _ => {
