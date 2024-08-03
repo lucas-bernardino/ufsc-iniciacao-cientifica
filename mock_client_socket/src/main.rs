@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 
 use rust_socketio::{
     asynchronous::{Client, ClientBuilder},
@@ -21,13 +21,19 @@ struct MockBody {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
 
-    let mut min_decibeis = Arc::new(tokio::sync::Mutex::new(10));
-    let mut max_decibeis = Arc::new(tokio::sync::Mutex::new(30));
-
+    let min_decibeis = Arc::new(tokio::sync::Mutex::new(10));
+    let max_decibeis = Arc::new(tokio::sync::Mutex::new(30));
+    
     let min_decibeis_cloned = Arc::clone(&min_decibeis);
     let max_decibeis_cloned = Arc::clone(&max_decibeis);
 
-    let callback = move |payload: Payload, socket: Client| {
+
+    let status_control = Arc::new(tokio::sync::Mutex::new(false));
+
+    let status_control_cloned = Arc::clone(&status_control);
+
+
+    let update_callback = move |payload: Payload, socket: Client| {
         let min_cloned = Arc::clone(&min_decibeis_cloned);
         let max_cloned = Arc::clone(&max_decibeis_cloned);
 
@@ -57,9 +63,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         .boxed()
     };
+
+    let status_callback = move |payload: Payload, socket: Client| {
+        let status_cloned = Arc::clone(&status_control_cloned);
+
+        async move {
+            let mut data = String::from("");
+            match payload {
+                Payload::Text(text) => data = text.first().unwrap().to_string(),
+                _ => {}
+            }
+            let data = data.trim_matches('"');
+            println!("Rasp received: {data}");
+            match data {
+                "send" => {*status_cloned.lock().await = true;}
+                "stop" => {*status_cloned.lock().await = false;}
+                _ => {}
+            }
+            println!("I have just updated the status. New value: {}", *status_cloned.lock().await);
+        }
+        .boxed()
+    };
+
     ClientBuilder::new("http://127.0.0.1:3000")
         .namespace("")
-        .on("update", callback)
+        .on("update", update_callback)
+        .on("status", status_callback)
         .connect()
         .await
         .expect("Connection failed");
@@ -75,10 +104,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .await?;
             std::thread::sleep(std::time::Duration::from_secs(1));
             println!(
-                "Sending request to server with the following body: {}. Min - {} and Max - {}",
+                "Sending request to server with the following body: {}. Min - {} | Max - {} | control_flag {}",
                 mock_body.decibels,
                 min_decibeis.lock().await,
-                max_decibeis.lock().await
+                max_decibeis.lock().await,
+                status_control.lock().await
             );
         }
     }

@@ -92,25 +92,37 @@ async fn socket_handler(socket: SocketRef) {
         let min = parsed_data.get(0);
         let max = parsed_data.get(1);
         if min.is_none() || max.is_none() {
-            emit_invalid_format_error(&socket);
+            emit_invalid_format_error(&socket, "update".into());
             return;
         }
         let min = min.unwrap().replace("min:", "").parse::<u16>();
         let max = max.unwrap().replace("max:", "").parse::<u16>();
         if min.is_err() || max.is_err() {
-            emit_invalid_format_error(&socket);
+            emit_invalid_format_error(&socket, "update".into());
             return;
         }
 
         let _ = socket.broadcast().emit("update", data).ok();
     });
+
+    socket.on("status", |socket: SocketRef, Data::<String>(data)|{
+        match data.as_str() {
+            "send" => {}, 
+            "stop" => {},
+            _ => {
+                emit_invalid_format_error(&socket, "status".into());
+                return;
+            }
+        }
+        let _ = socket.broadcast().emit("status", data).ok();
+    })
 }
 
-fn emit_invalid_format_error(socket: &SocketRef) {
-    socket
-        .emit(
-            "update",
-            "Invalid data format. Should be 'min:<value>,max:<value>'",
-        )
-        .unwrap();
+fn emit_invalid_format_error(socket: &SocketRef, event: String) {
+
+    match event.as_str() {
+        "update" => {socket.emit(event,"Invalid data format. Should be 'min:<value>,max:<value>'").unwrap();}
+        "status" => {socket.emit(event,"Invalid data format. Should be either 'info', 'send' or 'stop' ").unwrap();}
+        _ => {}
+    }
 }
