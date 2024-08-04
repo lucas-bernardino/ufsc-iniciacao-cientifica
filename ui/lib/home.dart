@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -16,8 +17,6 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-
-
 class _HomeState extends State<Home> {
 
   late IO.Socket socket;
@@ -25,6 +24,10 @@ class _HomeState extends State<Home> {
   bool _configOptions = false;
   final _textControllerMin = TextEditingController();
   final _textControllerMax = TextEditingController();
+
+  bool _isSendingData = false;
+
+  // socket.emit("status", "info");
 
   @override
   void dispose() {
@@ -39,6 +42,10 @@ class _HomeState extends State<Home> {
     super.initState();
     _textControllerMin.text = "4";
     _textControllerMax.text = "20";
+    //socket.emit("status", "info");
+    Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      socket.emit("status", "info");
+    },);
   }
 
   initSocket() {
@@ -56,8 +63,22 @@ class _HomeState extends State<Home> {
     socket.on('update',(data){
       print("Recebi: ${data}");
     });
+    socket.on('status',(data){
+      print("Recebi do status: ${data}");
+      String status = (data.toString().replaceAll("current:", ""));
+      if (status == "true") {
+        setState(() {
+          _isSendingData = true;
+        });
+      }
+      if (status == "false") {
+        setState(() {
+          _isSendingData = false;
+        });
+      }
+      print("_isSendingData inside of socket.on: $_isSendingData");
+    });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +173,7 @@ class _HomeState extends State<Home> {
                 Column(
                   children: [
                     Tooltip(
-                      message: "Continuar captura dos dados",
+                      message: _isSendingData ? "Pausar captura de dados" : "Continuar captura de dados",
                       height: 35.0,
                       verticalOffset: 70,
                       textStyle: TextStyle(color: Colors.white),
@@ -162,12 +183,13 @@ class _HomeState extends State<Home> {
                         splashColor: Colors.white,
                         iconSize: 50,
                         onPressed: () {
-                          print("Começou ou parou");
+                          setState(() {});
+                          print("_isSendingData after emitting: $_isSendingData");
                         },
-                        icon: Icon(Icons.play_arrow, color: Colors.lightBlue.shade800),
+                        icon: Icon(_isSendingData ? Icons.play_arrow : Icons.pause, color: Colors.lightBlue.shade800),
                       ),
                     ),
-                    const Text("Começar", style: TextStyle(color: Colors.white)),
+                    Text(_isSendingData ? "Pausar" : "Continuar", style: TextStyle(color: Colors.white)),
                   ],
                 ),
                 SizedBox(width: 110,),
