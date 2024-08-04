@@ -29,8 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     let status_control = Arc::new(tokio::sync::Mutex::new(false));
-
-    let status_control_cloned = Arc::clone(&status_control);
+    let status_control_cloned: Arc<tokio::sync::Mutex<bool>> = Arc::clone(&status_control);
 
 
     let update_callback = move |payload: Payload, socket: Client| {
@@ -93,10 +92,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .connect()
         .await
         .expect("Connection failed");
-    std::thread::sleep(std::time::Duration::from_secs(3));
+    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+    
+    let mut i = 1;
 
     loop {
-        for i in 1..100 {
+        if (*status_control.lock().await) {
             let mock_body = MockBody { decibels: i * 10 };
             client
                 .post("http://localhost:3000/create")
@@ -105,14 +106,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .await?;
             std::thread::sleep(std::time::Duration::from_secs(1));
             println!(
-                "Sending request to server with the following body: {}. Min - {} | Max - {} | control_flag {}",
+                "Sending request to server with the following body: {}. Min - {} | Max - {}",
                 mock_body.decibels,
                 min_decibeis.lock().await,
                 max_decibeis.lock().await,
-                status_control.lock().await
             );
+            i+=1;
         }
+        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
     }
-
     Ok(())
 }
