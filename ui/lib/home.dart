@@ -20,6 +20,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
 
   late IO.Socket socket;
+  late Timer? _timer;
 
   bool _configOptions = false;
   final _textControllerMin = TextEditingController();
@@ -31,20 +32,25 @@ class _HomeState extends State<Home> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     _textControllerMin.dispose();
     _textControllerMax.dispose();
+    socket.disconnect();
+    socket.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
-    initSocket();
     super.initState();
+    initSocket();
     _textControllerMin.text = "4";
     _textControllerMax.text = "20";
-    //socket.emit("status", "info");
-    Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      socket.emit("status", "info");
+    socket.emit("status", "info");
+    _timer = Timer.periodic(const Duration(milliseconds: 15000), (timer) {
+      if (mounted) {
+        socket.emit("status", "info");
+      }
     },);
   }
 
@@ -183,10 +189,14 @@ class _HomeState extends State<Home> {
                         splashColor: Colors.white,
                         iconSize: 50,
                         onPressed: () {
-                          setState(() {});
-                          print("_isSendingData after emitting: $_isSendingData");
+                          if (_isSendingData) {
+                            socket.emit("status", "stop");
+                          } else {
+                            socket.emit("status", "send");
+                          }
+                          socket.emit("status", "info");
                         },
-                        icon: Icon(_isSendingData ? Icons.play_arrow : Icons.pause, color: Colors.lightBlue.shade800),
+                        icon: Icon(_isSendingData ? Icons.pause : Icons.play_arrow, color: Colors.lightBlue.shade800),
                       ),
                     ),
                     Text(_isSendingData ? "Pausar" : "Continuar", style: TextStyle(color: Colors.white)),
