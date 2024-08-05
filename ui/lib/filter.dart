@@ -235,8 +235,6 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
             text: "Decibéis ao longo do tempo",
             textStyle: TextStyle(
               color: Colors.white,
-              fontFamily: 'Roboto',
-              fontStyle: FontStyle.italic,
               fontSize: 14,
             ),
           ),
@@ -258,9 +256,7 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
           primaryXAxis: const CategoryAxis(
               labelStyle: TextStyle(
                   color: Colors.white,
-                  fontFamily: 'Roboto',
                   fontSize: 14,
-                  fontStyle: FontStyle.italic,
                   fontWeight: FontWeight.w500
               )
           ),
@@ -268,9 +264,7 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
               minimum: 45,
               labelStyle: TextStyle(
                   color: Colors.white,
-                  fontFamily: 'Roboto',
                   fontSize: 14,
-                  fontStyle: FontStyle.italic,
                   fontWeight: FontWeight.w500
               )
           ),

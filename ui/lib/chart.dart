@@ -66,8 +66,6 @@ class _MicChart extends State<MicChart> {
                       text: "Decibéis em tempo real",
                       textStyle: TextStyle(
                         color: Colors.white,
-                        fontFamily: 'Roboto',
-                        fontStyle: FontStyle.italic,
                         fontSize: 14,
                       ),
                     ),
@@ -83,9 +81,7 @@ class _MicChart extends State<MicChart> {
                         majorGridLines: const MajorGridLines(width: 0),
                         labelStyle: TextStyle(
                             color: Colors.white,
-                            fontFamily: 'Roboto',
                             fontSize: 14,
-                            fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.w500
                         )
                     ),
@@ -93,9 +89,7 @@ class _MicChart extends State<MicChart> {
                         majorGridLines: const MajorGridLines(width: 0),
                         labelStyle: TextStyle(
                             color: Colors.white,
-                            fontFamily: 'Roboto',
                             fontSize: 14,
-                            fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.w500
                         )
                     ),

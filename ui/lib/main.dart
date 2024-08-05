@@ -20,7 +20,8 @@ class NavigationRailExampleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      theme: ThemeData(fontFamily: "SF_REGULAR"),
       home: NavRailExample(pageIndex: 0,),
     );
   }
