@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:ui/chart.dart';
 import 'package:ui/main.dart';
 
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -55,35 +57,39 @@ class _HomeState extends State<Home> {
   }
 
   initSocket() {
-    socket = IO.io("ws://localhost:3000", <String, dynamic>{
-      'autoConnect': false,
-      'transports': ['websocket'],
-    });
-    socket.connect();
-    socket.onConnect((_) {
-      print('Connection established');
-    });
-    socket.onDisconnect((_) => print('Connection Disconnection'));
-    socket.onConnectError((err) => print(err));
-    socket.onError((err) => print(err));
-    socket.on('update',(data){
-      print("Recebi: ${data}");
-    });
-    socket.on('status',(data){
-      print("Recebi do status: ${data}");
-      String status = (data.toString().replaceAll("current:", ""));
-      if (status == "true") {
-        setState(() {
-          _isSendingData = true;
-        });
-      }
-      if (status == "false") {
-        setState(() {
-          _isSendingData = false;
-        });
-      }
-      print("_isSendingData inside of socket.on: $_isSendingData");
-    });
+    var api_url = dotenv.env["API_URL"];
+    if (api_url != null) {
+      api_url = api_url.replaceAll("https", "ws"); // IF IT'S IN LOCALHOST, PLEASE CHANGE IT TO 'http' INSTEAD OF 'https'
+      socket = IO.io(api_url, <String, dynamic>{
+        'autoConnect': false,
+        'transports': ['websocket'],
+      });
+      socket.connect();
+      socket.onConnect((_) {
+        print('Connection established');
+      });
+      socket.onDisconnect((_) => print('Connection Disconnection'));
+      socket.onConnectError((err) => print(err));
+      socket.onError((err) => print(err));
+      socket.on('update',(data){
+        print("Recebi: ${data}");
+      });
+      socket.on('status',(data){
+        print("Recebi do status: ${data}");
+        String status = (data.toString().replaceAll("current:", ""));
+        if (status == "true") {
+          setState(() {
+            _isSendingData = true;
+          });
+        }
+        if (status == "false") {
+          setState(() {
+            _isSendingData = false;
+          });
+        }
+        print("_isSendingData inside of socket.on: $_isSendingData");
+      });
+    }
   }
 
   @override
