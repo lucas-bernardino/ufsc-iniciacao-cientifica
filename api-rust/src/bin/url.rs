@@ -27,13 +27,18 @@ fn get_url() -> Result<String, Box<dyn std::error::Error + 'static>> {
 
     let output_json: serde_json::Value = serde_json::from_str(output.as_str()).unwrap();
 
-    Ok(output_json["environments"][1]["shares"]
-        .clone()
+    let mut sorted_by_creation = output_json["environments"][2]["shares"]
         .as_array()
         .expect("Failed to get array out of urls")
+        .clone();
+    sorted_by_creation.sort_by_key(|key| key["createdAt"].as_i64());
+
+    let latest_url = sorted_by_creation
         .last()
         .expect("Failed to get last element in array")["frontendEndpoint"]
-        .to_string())
+        .clone();
+
+    Ok(latest_url.to_string())
 }
 
 fn send_email(url: &String) -> Result<(), Box<dyn std::error::Error + 'static>> {
