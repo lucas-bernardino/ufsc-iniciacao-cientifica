@@ -12,6 +12,8 @@ import 'package:ui/main.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'package:http/http.dart' as http;
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -30,7 +32,8 @@ class _HomeState extends State<Home> {
 
   bool _isSendingData = false;
 
-  // socket.emit("status", "info");
+  bool _isDeleteButtonClicked = false;
+  late String API_URL;
 
   @override
   void dispose() {
@@ -57,44 +60,60 @@ class _HomeState extends State<Home> {
   }
 
   initSocket() {
-    var api_url = dotenv.env["API_URL"];
-    if (api_url != null) {
-      api_url = api_url.replaceAll("https", "ws"); // IF IT'S IN LOCALHOST, PLEASE CHANGE IT TO 'http' INSTEAD OF 'https'
-      socket = IO.io(api_url, <String, dynamic>{
-        'autoConnect': false,
-        'transports': ['websocket'],
-      });
-      socket.connect();
-      socket.onConnect((_) {
-        print('Connection established');
-      });
-      socket.onDisconnect((_) => print('Connection Disconnection'));
-      socket.onConnectError((err) => print(err));
-      socket.onError((err) => print(err));
-      socket.on('update',(data){
-        print("Recebi: ${data}");
-      });
-      socket.on('status',(data){
-        print("Recebi do status: ${data}");
-        String status = (data.toString().replaceAll("current:", ""));
-        if (status == "true") {
-          setState(() {
-            _isSendingData = true;
-          });
-        }
-        if (status == "false") {
-          setState(() {
-            _isSendingData = false;
-          });
-        }
-        print("_isSendingData inside of socket.on: $_isSendingData");
-      });
+    API_URL = dotenv.env["API_URL"]!;
+    String api_url_socket = API_URL.replaceAll("https", "ws"); // IF IT'S IN LOCALHOST, PLEASE CHANGE IT TO 'http' INSTEAD OF 'https'
+    socket = IO.io(api_url_socket, <String, dynamic>{
+      'autoConnect': false,
+      'transports': ['websocket'],
+    });
+    socket.connect();
+    socket.onConnect((_) {
+      print('Connection established');
+    });
+    socket.onDisconnect((_) => print('Connection Disconnection'));
+    socket.onConnectError((err) => print(err));
+    socket.onError((err) => print(err));
+    socket.on('update',(data){
+      print("Recebi: ${data}");
+    });
+    socket.on('status',(data){
+      print("Recebi do status: ${data}");
+      String status = (data.toString().replaceAll("current:", ""));
+      if (status == "true") {
+        setState(() {
+          _isSendingData = true;
+        });
+      }
+      if (status == "false") {
+        setState(() {
+          _isSendingData = false;
+        });
+      }
+      print("_isSendingData inside of socket.on: $_isSendingData");
+    });
     }
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return _isDeleteButtonClicked ? AlertDialog(
+      backgroundColor: Colors.black54,
+      title: Text("Excluir permanentemente todos os dados?", style: TextStyle(color: Colors.white),),
+      content: Text("Essa ação é irreversível", style: TextStyle(color: Colors.white, fontFamily: "SF_BOLD")),
+      actions: [
+        TextButton(onPressed: () {
+          http.get(Uri.parse('${API_URL}/delete')).then((_) {
+            setState(() {
+              _isDeleteButtonClicked = false;
+            });
+          });
+        }, child: Text("Sim", style: TextStyle(color: Colors.blue, fontFamily: "SF_BOLD"),)),
+        TextButton(onPressed: () {
+          setState(() {
+            _isDeleteButtonClicked = false;
+          });
+        }, child: Text("Não", style: TextStyle(color: Colors.blue, fontFamily: "SF_BOLD")))
+      ],
+    ) : Container(
       width: 1000,
       child: Column(
         children: [
@@ -222,10 +241,12 @@ class _HomeState extends State<Home> {
                         splashColor: Colors.white,
                         iconSize: 50,
                         onPressed: () {
-                          print("Deseja deletar permanente todos os dados?");
+                          setState(() {
+                            _isDeleteButtonClicked = !_isDeleteButtonClicked;
+                          });
                         },
                         icon: Icon(Icons.delete_forever_rounded, color: Colors.lightBlue.shade800),
-                      ),
+                      )
                     ),
                     const Text("Apagar", style: TextStyle(color: Colors.white)),
                   ],
