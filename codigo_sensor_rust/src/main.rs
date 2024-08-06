@@ -48,7 +48,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let min_decibeis_cloned = Arc::clone(&min_decibeis);
     let max_decibeis_cloned = Arc::clone(&max_decibeis);
 
-    let callback = move |payload: Payload, socket: rust_socketio::asynchronous::Client| {
+    let min_db_read = Arc::clone(&min_decibeis);
+    let max_db_read = Arc::clone(&max_decibeis);
+
+    let status_control = Arc::new(tokio::sync::Mutex::new(false));
+    let status_control_cloned = Arc::clone(&status_control);
+
+    let update_callback = move |payload: Payload, socket: rust_socketio::asynchronous::Client| {
         let min_cloned = Arc::clone(&min_decibeis_cloned);
         let max_cloned = Arc::clone(&max_decibeis_cloned);
 
@@ -79,61 +85,88 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .boxed()
     };
 
+    let status_callback = move |payload: Payload, socket: rust_socketio::asynchronous::Client| {
+        let status_cloned = Arc::clone(&status_control_cloned);
+
+        let min_db_cloned = Arc::clone(&min_db_read);
+        let max_db_cloned = Arc::clone(&max_db_read);
+
+        async move {
+            let mut data = String::from("");
+            match payload {
+                Payload::Text(text) => data = text.first().unwrap().to_string(),
+                _ => {}
+            }
+            let data = data.trim_matches('"');
+            match data {
+                "info" => {
+                    socket.emit("status", format!("current:{},min:{},max:{}", *status_cloned.lock().await, *min_db_cloned.lock().await, *max_db_cloned.lock().await)).await.expect("Server unreachable");
+                }
+                "send" => {*status_cloned.lock().await = true;}
+                "stop" => {*status_cloned.lock().await = false;}
+                _ => {}
+            }
+        }
+        .boxed()
+    };
 
     println!("Antes de se conectar");
 
     ClientBuilder::new("http://localhost:3000")
         .namespace("")
-        .on("update", callback)
+        .on("update", update_callback)
+        .on("status", status_callback)
         .connect()
         .await
         .expect("Connection failed");
 
     println!("Depois de se conectar");
 
-    std::thread::sleep(std::time::Duration::from_secs(3));
+    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
 
     loop {
-        let sensor_data = ctx.read_holding_registers(0x00, 2).await?;
-        let decibels_value = (sensor_data[0] + sensor_data[1]) / 2;
+        if (*status_control.lock().await) {
+            let sensor_data = ctx.read_holding_registers(0x00, 2).await?;
+            let decibels_value = (sensor_data[0] + sensor_data[1]) / 2;
 
-        let body = Body {
-            decibels: decibels_value,
-        };
-
-        let res = server
-            .post("http://localhost:3000/create")
-            .json(&body)
-            .send()
-            .await?;
-
-        let min_db = min_decibeis.lock().await;
-        let max_db = max_decibeis.lock().await;
-
-        println!("Current decibels: {decibels_value}. Min - {min_db} and Max - {max_db}");
-
-        if decibels_value > *max_db && !is_recording {
-            match start_recording() {
-                Ok(pid) => {
-                    ffmpeg_pid = pid;
-                    println!("Started recording!");
-                }
-                Err(err) => panic!("ERROR: could not start recording\n{err}"), // TODO: Maybe create a POST method that will return the error.
+            let body = Body {
+                decibels: decibels_value,
             };
-            is_recording = true;
-        }
 
-        if decibels_value < *min_db && is_recording {
-            match stop_recording(ffmpeg_pid) {
-                Ok(_) => {
-                    println!("Stopped recording ffmpeg with PID: {ffmpeg_pid}");
-                    is_recording = false;
-                    post_video(&server).await;
-                }
-                Err(err) => {
-                    panic!("ERROR: could not stop recording\n{err}"); // TODO: Maybe create a POST method that will return the error.
-                }
-            };
+            let res = server
+                .post("http://localhost:3000/create")
+                .json(&body)
+                .send()
+                .await?;
+
+            let min_db = min_decibeis.lock().await;
+            let max_db = max_decibeis.lock().await;
+
+            println!("Current decibels: {decibels_value}. Min - {min_db} and Max - {max_db}");
+
+            if decibels_value > *max_db && !is_recording {
+                match start_recording() {
+                    Ok(pid) => {
+                        ffmpeg_pid = pid;
+                        println!("Started recording!");
+                    }
+                    Err(err) => panic!("ERROR: could not start recording\n{err}"), // TODO: Maybe create a POST method that will return the error.
+                };
+                is_recording = true;
+            }
+
+            if decibels_value < *min_db && is_recording {
+                match stop_recording(ffmpeg_pid) {
+                    Ok(_) => {
+                        println!("Stopped recording ffmpeg with PID: {ffmpeg_pid}");
+                        is_recording = false;
+                        post_video(&server).await;
+                    }
+                    Err(err) => {
+                        panic!("ERROR: could not stop recording\n{err}"); // TODO: Maybe create a POST method that will return the error.
+                    }
+                };
+            }
         }
     }
 
@@ -192,7 +225,7 @@ async fn post_video(server: &reqwest::Client) -> Result<(), Box<dyn std::error::
         Ok(f) => f,
         Err(e) => match e.kind() {
             std::io::ErrorKind::NotFound => {
-                std::thread::sleep(std::time::Duration::from_secs(5));
+                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
                 println!("Vou deletar o arquivo");
                 tokio::fs::remove_file("out.mkv").await.unwrap();
                 println!("Deletei");
