@@ -12,8 +12,6 @@ use axum::{
 };
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-//use tokio_stream::StreamExt;
-use futures_util::StreamExt;
 use std::net::SocketAddr;
 
 #[derive(Clone)]
@@ -114,8 +112,8 @@ async fn socket_handler(socket: SocketRef) {
         }
         match data.as_str() {
             "info" => {}
-            "send" => {}, 
-            "stop" => {},
+            "send" => {}
+            "stop" => {}
             _ => {
                 emit_invalid_format_error(&socket, "status".into());
                 return;
@@ -126,10 +124,24 @@ async fn socket_handler(socket: SocketRef) {
 }
 
 fn emit_invalid_format_error(socket: &SocketRef, event: String) {
-
     match event.as_str() {
-        "update" => {socket.emit(event,"Invalid data format. Should be 'min:<value>,max:<value>'").unwrap();}
-        "status" => {socket.emit(event,"Invalid data format. Should be either 'info', 'send' or 'stop' ").unwrap();}
+        "update" => {
+            socket
+                .emit(
+                    event,
+                    "Invalid data format. Should be 'min:<value>,max:<value>'",
+                )
+                .unwrap();
+        }
+        "status" => {
+            socket
+                .emit(
+                    event,
+                    "Invalid data format. Should be either 'info', 'send' or 'stop' ",
+                )
+                .unwrap();
+        }
         _ => {}
     }
 }
+
