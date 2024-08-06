@@ -117,6 +117,7 @@ class _HomeState extends State<Home> {
       width: 1000,
       child: Column(
         children: [
+          const Image(image: AssetImage('images/lav-logo.png'), height: 300, width: 300,),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -204,7 +205,7 @@ class _HomeState extends State<Home> {
                 Column(
                   children: [
                     Tooltip(
-                      message: _isSendingData ? "Pausar captura de dados" : "Continuar captura de dados",
+                      message: _isSendingData ? "Pausar captura de dados" : "Iniciar medição",
                       height: 35.0,
                       verticalOffset: 70,
                       textStyle: TextStyle(color: Colors.white),
@@ -224,7 +225,7 @@ class _HomeState extends State<Home> {
                         icon: Icon(_isSendingData ? Icons.pause : Icons.play_arrow, color: Colors.lightBlue.shade800),
                       ),
                     ),
-                    Text(_isSendingData ? "Pausar" : "Continuar", style: TextStyle(color: Colors.white)),
+                    Text(_isSendingData ? "Pausar" : "Iniciar medição", style: TextStyle(color: Colors.white)),
                   ],
                 ),
                 SizedBox(width: 110,),
@@ -329,8 +330,7 @@ class _HomeState extends State<Home> {
                                     surfaceTintColor: MaterialStateProperty.all<Color>(Colors.black)
                                 ),
                                 onPressed: () {
-                                  socket.emit("update", "min:${_textControllerMin.text},max:${_textControllerMax.text}");
-                                  print("Mandei o valor");
+                                  socket.emit("update", "min:${(double.parse(_textControllerMin.text) * 10).toStringAsFixed(0)},max:${(double.parse(_textControllerMax.text) * 10).toStringAsFixed(0)}");
                                 },
                                 child: const Row(
                                   children: [
