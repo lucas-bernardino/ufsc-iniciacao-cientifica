@@ -53,6 +53,8 @@ Future<void> fetchCsv(double min, String ordered, bool downloadFlag) async {
 
   final dio = Dio();
 
+  min = min * 10; // Need to do this since our database is all multiplied by ten (10).
+
   final rs = await dio.get(
     "${API_URL}/filter?min=$min&ordered=$ordered",
     options: Options(responseType: ResponseType.stream),
