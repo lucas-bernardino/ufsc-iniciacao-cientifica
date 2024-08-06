@@ -49,8 +49,6 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     initSocket();
-    _textControllerMin.text = "4";
-    _textControllerMax.text = "20";
     socket.emit("status", "info");
     _timer = Timer.periodic(const Duration(milliseconds: 15000), (timer) {
       if (mounted) {
@@ -78,13 +76,19 @@ class _HomeState extends State<Home> {
     });
     socket.on('status',(data){
       print("Recebi do status: ${data}");
-      String status = (data.toString().replaceAll("current:", ""));
-      if (status == "true") {
+      List<String> stats = (data.toString().replaceAll("current:", "")).split(",");
+      print("Got stats: ${stats}");
+      var current_min = stats[1].replaceAll("min:", "");
+      var current_max = stats[2].replaceAll("max:", "");
+      print("current_min: ${current_min} || After parsing: ${(double.parse(current_min) / 10)}");
+      _textControllerMin.text = (double.parse(current_min) / 10).toString();
+      _textControllerMax.text = (double.parse(current_max) / 10).toString();
+      if (stats[0] == "true") {
         setState(() {
           _isSendingData = true;
         });
       }
-      if (status == "false") {
+      if (stats[0] == "false") {
         setState(() {
           _isSendingData = false;
         });
@@ -205,7 +209,7 @@ class _HomeState extends State<Home> {
                 Column(
                   children: [
                     Tooltip(
-                      message: _isSendingData ? "Pausar captura de dados" : "Iniciar medição",
+                      message: _isSendingData ? "Pausar captura de dados" : "Ativar captura dos dados",
                       height: 35.0,
                       verticalOffset: 70,
                       textStyle: TextStyle(color: Colors.white),
@@ -225,7 +229,7 @@ class _HomeState extends State<Home> {
                         icon: Icon(_isSendingData ? Icons.pause : Icons.play_arrow, color: Colors.lightBlue.shade800),
                       ),
                     ),
-                    Text(_isSendingData ? "Pausar" : "Iniciar medição", style: TextStyle(color: Colors.white)),
+                    Text(_isSendingData ? "Pausar" : "Capturar", style: TextStyle(color: Colors.white)),
                   ],
                 ),
                 SizedBox(width: 110,),
