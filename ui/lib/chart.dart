@@ -79,6 +79,7 @@ class _MicChart extends State<MicChart> {
                     ),
                     primaryXAxis: const CategoryAxis(
                         majorGridLines: const MajorGridLines(width: 0),
+                        title: AxisTitle(text: "Data", textStyle: TextStyle(color: Colors.white, fontStyle: FontStyle.italic, fontFamily: "SF_BOLD")),
                         labelStyle: TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -86,6 +87,7 @@ class _MicChart extends State<MicChart> {
                         )
                     ),
                     primaryYAxis: const NumericAxis(
+                        title: AxisTitle(text: "Db", textStyle: TextStyle(color: Colors.white, fontStyle: FontStyle.italic, fontFamily: "SF_BOLD")),
                         majorGridLines: const MajorGridLines(width: 0),
                         labelStyle: TextStyle(
                             color: Colors.white,
