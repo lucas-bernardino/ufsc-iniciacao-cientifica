@@ -3,8 +3,12 @@
 #### Criação de um aplicativo para a monitoração de ruídos utilizando um microfone e uma câmera conectados em uma Raspberry Pi 3.
 
 [Objetivos](#objetivos)
+
 [Sensores Utilizados](#sensores-utilizados)
+
 [Tecnologias Utilizadas](#sensores-utilizados)
+
+[Como Utilizar](#como-utilizar)
 
 
 ![Home](/assets/home.png)
