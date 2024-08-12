@@ -297,3 +297,11 @@ pub async fn last_data(
 
     Ok(Json(query_result))
 }
+
+pub async fn delete_video(Path(id): Path<u16>) -> impl IntoResponse {
+    println!("Peguei o id: {id}");
+    match std::fs::remove_file(format!("./video{}.mkv", id)) {
+        Ok(_) => StatusCode::OK,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    }
+}
