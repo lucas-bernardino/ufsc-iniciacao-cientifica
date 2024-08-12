@@ -1,5 +1,6 @@
 use std::{sync::Arc, u16};
 
+use handler::delete_video;
 use socketioxide::{
     extract::{Data, SocketRef},
     SocketIo,
@@ -68,6 +69,7 @@ async fn main() {
         .route("/list", get(list_videos))
         .route("/download/video/:id", get(download_by_id))
         .route("/last", get(last_data))
+        .route("/delete/video/:id", get(delete_video))
         .layer(layer)
         .with_state(app_state);
 
@@ -144,4 +146,3 @@ fn emit_invalid_format_error(socket: &SocketRef, event: String) {
         _ => {}
     }
 }
-
