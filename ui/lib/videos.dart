@@ -40,7 +40,21 @@ class _VideosState extends State<Videos> {
         ],),
         subtitleTextStyle: TextStyle(color: Colors.blueGrey, fontFamily: "SF_BOLD"),
         title: Text(element.video_name, style: TextStyle(color: Colors.white),),
-        trailing: IconButton(onPressed: () {downloadVideo(index);}, icon: const Icon(Icons.download, color: Colors.white,),),
+        trailing: SizedBox(
+          width: 100,
+          child: Row(
+            children: [
+              IconButton(onPressed: () {
+                setState(() {});
+                downloadVideo(index);
+                }, icon: const Icon(Icons.download, color: Colors.white,),),
+              IconButton(onPressed: () {
+                deleteVideo(index);
+                setState(() {});
+                }, icon: const Icon(Icons.delete, color: Colors.white,),),
+            ],
+          ),
+        ),
       );
       _listTile.add(listTile);
     });
@@ -144,7 +158,13 @@ Future<void> downloadVideo(int video_number) async {
   }
 
   await fileStream.close();
+}
 
+Future <int> deleteVideo(int video_number) async {
+  final API_URL = dotenv.env["API_URL"];
+  final response = await http.get(Uri.parse('${API_URL}/delete/video/${video_number}'));
+  print("Status code: $response");
+  return response.statusCode;
 }
 
 
