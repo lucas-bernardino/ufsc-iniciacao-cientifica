@@ -27,10 +27,19 @@ class _VideosState extends State<Videos> {
     var contents = await getListOfVideos();
     _listTile = [];
     contents?.asMap().forEach((index, element) {
+      int hours = int.parse(element.video_hour.substring(0, 2)) - 4; // CONVERTING TO LOCAL TIME
+      var minutes = element.video_hour.substring(3, 5);
       var listTile = ListTile(
         key: Key(index.toString()),
         leading: CircleAvatar(child: Text(index.toString())),
-        title: Text(element.name, style: TextStyle(color: Colors.white),),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+          Text("Tamanho: ${element.video_size}"),
+          Text("Data de Criação: ${element.video_day}/${element.video_month} - ${hours}:${minutes}")
+        ],),
+        subtitleTextStyle: TextStyle(color: Colors.blueGrey, fontFamily: "SF_BOLD"),
+        title: Text(element.video_name, style: TextStyle(color: Colors.white),),
         trailing: IconButton(onPressed: () {downloadVideo(index);}, icon: const Icon(Icons.download, color: Colors.white,),),
       );
       _listTile.add(listTile);
@@ -70,27 +79,35 @@ class _VideosState extends State<Videos> {
 }
 
 class VideosResponse {
-  final String duration;
-  final String name;
-  final String size;
+  final String video_name;
+  final String video_hour;
+  final String video_day;
+  final String video_month;
+  final String video_size;
 
   const VideosResponse({
-    required this.duration,
-    required this.name,
-    required this.size,
+    required this.video_name,
+    required this.video_hour,
+    required this.video_day,
+    required this.video_month,
+    required this.video_size,
   });
 
   factory VideosResponse.fromJson(Map<String, dynamic> json) {
     return switch (json) {
       {
-      'duration': String duration,
-      'name': String name,
-      'size': String size,
+      'video_name': String video_name,
+      'video_hour': String video_hour,
+      'video_day': String video_day,
+      'video_month': String video_month,
+      'video_size': String video_size,
       } =>
           VideosResponse(
-              duration: duration,
-              name: name,
-              size: size
+              video_name: video_name,
+              video_hour: video_hour,
+              video_day: video_day,
+              video_month: video_month,
+              video_size: video_size,
           ),
       _ => throw const FormatException('Failed to load album.'),
     };
