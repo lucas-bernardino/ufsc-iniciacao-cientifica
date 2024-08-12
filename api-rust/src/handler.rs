@@ -230,23 +230,20 @@ pub async fn list_videos() -> Response {
 
     video_names_string
         .lines()
-        .map(|line| line.split_whitespace().last().unwrap())
-        .for_each(|name| {
-            let du = Command::new("du")
-                .args(["-h", name])
-                .stdout(Stdio::piped())
-                .spawn()
-                .unwrap()
-                .wait_with_output()
-                .unwrap();
-
-            let du_output = String::from_utf8(du.stdout).unwrap();
-            let size = du_output.split_whitespace().next().unwrap();
+        .map(|line| line.split_whitespace().collect::<Vec<_>>())
+        .for_each(|info| {
+            let video_name = info.get(8).unwrap().to_string();
+            let video_hour = info.get(7).unwrap().to_string();
+            let video_day = info.get(6).unwrap().to_string();
+            let video_month = info.get(5).unwrap().to_string();
+            let video_size = info.get(4).unwrap().to_string();
 
             foo_vec.push(VideoInfo {
-                name: name.to_string(),
-                duration: "-".to_string(),
-                size: size.to_string(),
+                video_name,
+                video_hour,
+                video_day,
+                video_month,
+                video_size,
             });
         });
 

@@ -27,7 +27,9 @@ pub struct Filter {
 
 #[derive(Serialize)]
 pub struct VideoInfo {
-    pub name: String,
-    pub duration: String,
-    pub size: String,
+    pub video_name: String,
+    pub video_hour: String,
+    pub video_day: String,
+    pub video_month: String,
+    pub video_size: String,
 }
