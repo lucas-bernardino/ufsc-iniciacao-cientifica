@@ -45,11 +45,11 @@ class _VideosState extends State<Videos> {
           child: Row(
             children: [
               IconButton(onPressed: () {
+                downloadVideo(element.video_name);
                 setState(() {});
-                downloadVideo(index);
                 }, icon: const Icon(Icons.download, color: Colors.white,),),
               IconButton(onPressed: () {
-                deleteVideo(index);
+                deleteVideo(element.video_name);
                 setState(() {});
                 }, icon: const Icon(Icons.delete, color: Colors.white,),),
             ],
@@ -142,7 +142,7 @@ Future<List<VideosResponse>?> getListOfVideos() async {
   return null;
 }
 
-Future<void> downloadVideo(int video_number) async {
+Future<void> downloadVideo(String video_number) async {
   final API_URL = dotenv.env["API_URL"];
   final dio = Dio();
   final rs = await dio.get(
@@ -150,7 +150,7 @@ Future<void> downloadVideo(int video_number) async {
     options: Options(responseType: ResponseType.stream),
   );
 
-  final file = File('video$video_number.mkv');
+  final file = File(video_number);
   final fileStream = file.openWrite();
 
   await for (final chunk in rs.data.stream) {
@@ -160,7 +160,7 @@ Future<void> downloadVideo(int video_number) async {
   await fileStream.close();
 }
 
-Future <int> deleteVideo(int video_number) async {
+Future <int> deleteVideo(String video_number) async {
   final API_URL = dotenv.env["API_URL"];
   final response = await http.get(Uri.parse('${API_URL}/delete/video/${video_number}'));
   print("Status code: $response");
