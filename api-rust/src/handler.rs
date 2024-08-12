@@ -250,8 +250,8 @@ pub async fn list_videos() -> Response {
     Json(serde_json::json!(foo_vec)).into_response()
 }
 
-pub async fn download_by_id(Path(id): Path<u16>) -> Response {
-    let file = tokio::fs::File::open(format!("video{id}.mkv")).await;
+pub async fn download_by_name(Path(name): Path<String>) -> Response {
+    let file = tokio::fs::File::open(format!("./{name}")).await;
 
     if file.is_err() {
         let body = serde_json::json!({
@@ -298,9 +298,11 @@ pub async fn last_data(
     Ok(Json(query_result))
 }
 
-pub async fn delete_video(Path(id): Path<u16>) -> impl IntoResponse {
-    println!("Peguei o id: {id}");
-    match std::fs::remove_file(format!("./video{}.mkv", id)) {
+pub async fn delete_video(Path(name): Path<String>) -> impl IntoResponse {
+    if !name.contains("mkv") {
+        return StatusCode::BAD_REQUEST;
+    }
+    match std::fs::remove_file(format!("./{}", name)) {
         Ok(_) => StatusCode::OK,
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }

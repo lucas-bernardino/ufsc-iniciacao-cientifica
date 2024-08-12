@@ -25,7 +25,7 @@ mod handler;
 mod models;
 
 use crate::handler::{
-    create_microphone_handler, delete_data, download_by_id, get_filter_microphone_handler,
+    create_microphone_handler, delete_data, download_by_name, get_filter_microphone_handler,
     get_microphone_handler, get_video, handle_download, last_data, list_videos,
 };
 
@@ -67,9 +67,9 @@ async fn main() {
         .route("/download", get(get_video))
         .route("/delete", get(delete_data))
         .route("/list", get(list_videos))
-        .route("/download/video/:id", get(download_by_id))
+        .route("/download/video/:name", get(download_by_name))
         .route("/last", get(last_data))
-        .route("/delete/video/:id", get(delete_video))
+        .route("/delete/video/:name", get(delete_video))
         .layer(layer)
         .with_state(app_state);
 
