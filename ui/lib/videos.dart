@@ -78,9 +78,12 @@ class _VideosState extends State<Videos> {
           future: updateListTile(context),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
-              return ListView(
-                  shrinkWrap: true,
-                  children: _listTile,
+              return Expanded(
+                child: ListView(
+                    shrinkWrap: true,
+                    scrollDirection: Axis.vertical,
+                    children: _listTile,
+                ),
               );
             } else {
               return const CircularProgressIndicator();
