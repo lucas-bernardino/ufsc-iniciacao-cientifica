@@ -227,7 +227,7 @@ async fn post_video(server: &reqwest::Client) -> Result<(), Box<dyn std::error::
             std::io::ErrorKind::NotFound => {
                 tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
                 println!("Vou deletar o arquivo");
-                tokio::fs::remove_file("out.mkv").await.unwrap();
+                tokio::fs::remove_file("out.mkv").await?;
                 println!("Deletei");
                 return Ok(());
             }
