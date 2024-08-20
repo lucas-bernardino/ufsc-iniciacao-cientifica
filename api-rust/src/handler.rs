@@ -83,7 +83,7 @@ pub async fn get_filter_microphone_handler(
         Some("decibels") => {
             sqlx::query_as!(
                 MicrophoneModel,
-                "SELECT * FROM microphone WHERE decibels > $1 ORDER BY decibels DESC LIMIT $2",
+                "SELECT * FROM microphone WHERE decibels > $1 ORDER BY decibels LIMIT $2",
                 min,
                 limit
             )
@@ -93,7 +93,7 @@ pub async fn get_filter_microphone_handler(
         Some("created_at") => {
             sqlx::query_as!(
                 MicrophoneModel,
-                "SELECT * FROM microphone WHERE decibels > $1 ORDER BY created_at DESC LIMIT $2",
+                "SELECT * FROM microphone WHERE decibels > $1 ORDER BY created_at LIMIT $2",
                 min,
                 limit
             )
@@ -103,7 +103,7 @@ pub async fn get_filter_microphone_handler(
         None => {
             sqlx::query_as!(
                 MicrophoneModel,
-                "SELECT * FROM microphone WHERE decibels > $1 ORDER BY id DESC LIMIT $2",
+                "SELECT * FROM microphone WHERE decibels > $1 ORDER BY id LIMIT $2",
                 min,
                 limit
             )
