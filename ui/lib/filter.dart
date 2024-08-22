@@ -225,9 +225,9 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
   }
   List<DataPoints> _dataSource = [];
   for (var item in csvData.skip(1)) {
-    double decibelsParsed = item[1] / 10;
+    //double decibelsParsed = item[1] / 10;
     String timestampParsed = item[2].toString().substring(11, 23);
-    _dataSource.add(DataPoints(timestampParsed, decibelsParsed));
+    _dataSource.add(DataPoints(timestampParsed, item[1]));
   }
   return Container(
     child: Column(
