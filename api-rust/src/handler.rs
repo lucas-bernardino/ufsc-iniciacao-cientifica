@@ -55,11 +55,12 @@ pub async fn create_microphone_handler(
 
 fn handle_serialization(
     filename: &'static str,
-    data: Vec<MicrophoneModel>,
+    mut data: Vec<MicrophoneModel>,
 ) -> Result<(), csv::Error> {
     let mut csv_wtr = WriterBuilder::new().from_path(filename).unwrap();
 
-    for value in data.iter() {
+    for value in data.iter_mut() {
+        value.decibels = value.decibels / 10.0;
         csv_wtr.serialize(value)?;
     }
 
