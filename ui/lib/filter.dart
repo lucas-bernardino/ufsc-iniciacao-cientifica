@@ -270,9 +270,9 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
                   fontWeight: FontWeight.w500
               )
           ),
-          series: <ColumnSeries<DataPoints, String>>[
+          series: <FastLineSeries<DataPoints, String>>[
             // Initialize line series with data points
-            ColumnSeries<DataPoints, String>(
+            FastLineSeries <DataPoints, String>(
               color: Colors.lightBlue,
               dataSource: _dataSource,
               xValueMapper: (DataPoints value, _) => value.x,
