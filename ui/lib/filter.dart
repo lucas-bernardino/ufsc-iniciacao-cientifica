@@ -206,6 +206,7 @@ class _MicFilterState extends State<MicFilter> {
     );
   }
 }
+
 Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck, csvData) {
   if (csvData == null) {
     return Container (
@@ -224,11 +225,20 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
     );
   }
   List<DataPoints> _dataSource = [];
+  double maxYAxis = csvData[1][1] as double;
+  double minYAxis = csvData[1][1] as double;
   for (var item in csvData.skip(1)) {
     try {
-      String timestampParsed = item[2].toString().substring(11, 23);
-      _dataSource.add(DataPoints(timestampParsed, item[1]));
+      if (item[1] as double > maxYAxis) {
+        maxYAxis = item[1] as double;
+      }
+      if (item[1] as double < minYAxis) {
+        minYAxis = item[1] as double;
+      }
+      String timestampParsed = item[2].toString().replaceAll("Z", "");
+      _dataSource.add(DataPoints(DateTime.parse(timestampParsed), item[1]));
     } catch (e) {
+      print(e);
       print("Nao consegui colocar o ponto: ${item} no grafico");
     }
   }
@@ -258,24 +268,23 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
           ),
           key: cck,
           // Initialize category axis (e.g., x-axis)
-          primaryXAxis: const CategoryAxis(
+          primaryXAxis: DateTimeAxis(
               labelStyle: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w500
               )
           ),
-          primaryYAxis: const NumericAxis(
-              minimum: 45,
+          primaryYAxis: NumericAxis(
               labelStyle: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w500
               )
           ),
-          series: <FastLineSeries<DataPoints, String>>[
+          series: <FastLineSeries<DataPoints, DateTime>>[
             // Initialize line series with data points
-            FastLineSeries <DataPoints, String>(
+            FastLineSeries <DataPoints, DateTime>(
               color: Colors.lightBlue,
               dataSource: _dataSource,
               xValueMapper: (DataPoints value, _) => value.x,
@@ -322,7 +331,7 @@ Future<void> _renderChartAsImage(GlobalKey<SfCartesianChartState> cck) async {
 
 class DataPoints {
   DataPoints (this.x, this.y);
-  final String? x;
+  final DateTime? x;
   final num? y;
 }
 
