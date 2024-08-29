@@ -83,12 +83,15 @@ class _MicFilterState extends State<MicFilter> {
   late Future<MicResponse> futureAlbum;
   double _decibelsslidervalue = 40;
   double _ordenationslidervalue = 0;
+  double _imageoptionslidervalue = 0;
 
   bool _decibels_flag = false;
   bool _ordenation_flag = false;
   bool _download_flag = false;
+  bool _imageOptions_flag = false;
 
   final List<bool> _selectedToggleOptions = <bool>[true, false];
+  final List<bool> _selectedImageOptions = <bool>[true, false];
 
 
   final GlobalKey<SfCartesianChartState> _cartesianChartKey = GlobalKey();
@@ -134,9 +137,13 @@ class _MicFilterState extends State<MicFilter> {
         SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [ElevatedButton(onPressed: () => {setState(() {
-            _ordenation_flag = !_ordenation_flag;
-          })}, child: Text("Filtrar ordenação", style: TextStyle(color: Colors.lightBlue.shade900)))],),
+          children: [
+            ElevatedButton(
+                onPressed: () => {setState(() {
+                  _ordenation_flag = !_ordenation_flag;
+                })},
+                child: Text("Filtrar ordenação", style: TextStyle(color: Colors.lightBlue.shade900)))
+          ],),
         Visibility(visible: _ordenation_flag, child: Column(children: [
           SizedBox(height: 20,),
           // ????? Text("Ordenação decrescente", style: TextStyle(color: Colors.white)),
@@ -166,6 +173,45 @@ class _MicFilterState extends State<MicFilter> {
             ],
           ),
         ],)),
+          SizedBox(height: 20,),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                  onPressed: () => {setState(() {
+                    _imageOptions_flag = !_imageOptions_flag;
+                  })},
+                  child: Text("Opções de Imagem", style: TextStyle(color: Colors.lightBlue.shade900)))
+            ],),
+          Visibility(visible: _imageOptions_flag, child: Column(children: [
+            SizedBox(height: 20,),
+            // ????? Text("Ordenação decrescente", style: TextStyle(color: Colors.white)),
+            ToggleButtons(
+              direction: Axis.horizontal,
+              onPressed: (int index) {
+                setState(() {
+                  for (int i = 0; i < _selectedImageOptions.length; i++) {
+                    _selectedImageOptions[i] = i == index;
+                  }
+                  _imageoptionslidervalue = index.toDouble();
+                });
+              },
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
+              selectedBorderColor: Colors.lightBlue.shade400,
+              selectedColor: Colors.white,
+              fillColor: Colors.lightBlue.shade800,
+              color: Colors.white,
+              constraints: const BoxConstraints(
+                minHeight: 40.0,
+                minWidth: 120.0,
+              ),
+              isSelected: _selectedImageOptions,
+              children: const [
+                Text("Performance"),
+                Text("Qualidade")
+              ],
+            ),
+          ],)),
         SizedBox(height: 20,),
         Column(
           children: [
@@ -193,8 +239,8 @@ class _MicFilterState extends State<MicFilter> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 return Visibility(
-                    visible: !_decibels_flag && !_ordenation_flag,
-                    child: ChartImage(context, _cartesianChartKey, snapshot.data)
+                    visible: !_decibels_flag && !_ordenation_flag && !_imageOptions_flag,
+                    child: ChartImage(context, _cartesianChartKey, snapshot.data, _imageoptionslidervalue)
                 );
               } else {
                 return const CircularProgressIndicator();
@@ -207,7 +253,7 @@ class _MicFilterState extends State<MicFilter> {
   }
 }
 
-Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck, csvData) {
+Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck, csvData, imageOpt) {
   if (csvData == null) {
     return Container (
       child: Column(
@@ -268,7 +314,13 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
           ),
           key: cck,
           // Initialize category axis (e.g., x-axis)
-          primaryXAxis: DateTimeAxis(
+          primaryXAxis: imageOpt == 0 ? DateTimeAxis(
+              labelStyle: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500
+              )
+          ) : DateTimeCategoryAxis(
               labelStyle: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
