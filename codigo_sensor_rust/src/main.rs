@@ -184,7 +184,7 @@ fn check_camera_available() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
+// ffmpeg -f v4l2 -framerate 30 -video_size 1280x720 -input_format mjpeg -i /dev/video0 -f alsa -i hw:3,0 -c:v copy -c:a aac out.mkv
 fn start_recording() -> Result<u32, Box<dyn std::error::Error>> {
     let ffmpeg_command = Command::new("ffmpeg")
         .args([
@@ -198,9 +198,15 @@ fn start_recording() -> Result<u32, Box<dyn std::error::Error>> {
             "mjpeg",
             "-i",
             "/dev/video0",
-            "-c",
+            "-f",
+            "alsa",
+            "-i",
+            "default",
+            "-c:v",
             "copy",
-            "out.mkv",
+            "-c:a",
+            "aac",
+            "out.mkv"
         ])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
