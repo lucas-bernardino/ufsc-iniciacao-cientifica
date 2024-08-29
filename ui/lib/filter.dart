@@ -225,9 +225,12 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
   }
   List<DataPoints> _dataSource = [];
   for (var item in csvData.skip(1)) {
-    //double decibelsParsed = item[1] / 10;
-    String timestampParsed = item[2].toString().substring(11, 23);
-    _dataSource.add(DataPoints(timestampParsed, item[1]));
+    try {
+      String timestampParsed = item[2].toString().substring(11, 23);
+      _dataSource.add(DataPoints(timestampParsed, item[1]));
+    } catch (e) {
+      print("Nao consegui colocar o ponto: ${item} no grafico");
+    }
   }
   return Container(
     child: Column(
