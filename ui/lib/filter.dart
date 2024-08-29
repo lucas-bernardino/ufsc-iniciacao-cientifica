@@ -276,6 +276,8 @@ Container ChartImage (BuildContext context, GlobalKey<SfCartesianChartState> cck
               )
           ),
           primaryYAxis: NumericAxis(
+              minimum: minYAxis - 3,
+              maximum: maxYAxis + 3,
               labelStyle: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
