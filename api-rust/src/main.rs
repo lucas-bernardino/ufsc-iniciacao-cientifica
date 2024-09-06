@@ -5,7 +5,6 @@ use socketioxide::{
     extract::{Data, SocketRef},
     SocketIo,
 };
-use tokio::sync::Mutex;
 
 use axum::{
     routing::{get, post},
@@ -18,7 +17,6 @@ use std::net::SocketAddr;
 #[derive(Clone)]
 pub struct AppState {
     db: Pool<Postgres>,
-    file_count: Arc<Mutex<u16>>,
 }
 
 mod handler;
@@ -26,12 +24,13 @@ mod models;
 
 use crate::handler::{
     create_microphone_handler, delete_data, download_by_name, get_filter_microphone_handler,
-    get_microphone_handler, get_video, handle_download, last_data, list_videos,
+    get_microphone_handler, handle_download, last_data, list_videos,
 };
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+
 
     let database_url = std::env::var("DATABASE_URL").expect("Missing DATABASE_URL in .env");
     let pool = match PgPoolOptions::new()
@@ -49,9 +48,9 @@ async fn main() {
         }
     };
 
+
     let app_state = Arc::new(AppState {
         db: pool.clone(),
-        file_count: Arc::new(Mutex::new(0)),
     });
 
     let (layer, io) = SocketIo::new_layer();
@@ -64,7 +63,6 @@ async fn main() {
         .route("/get", get(get_microphone_handler))
         .route("/filter", get(get_filter_microphone_handler))
         .route("/video", post(handle_download))
-        .route("/download", get(get_video))
         .route("/delete", get(delete_data))
         .route("/list", get(list_videos))
         .route("/download/video/:name", get(download_by_name))

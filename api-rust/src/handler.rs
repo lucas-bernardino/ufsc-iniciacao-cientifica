@@ -13,7 +13,8 @@ use tokio_util::io::{ReaderStream, StreamReader};
 use crate::models::{CreateMicrophoneSchema, Filter, MicrophoneModel, VideoInfo};
 use crate::AppState;
 
-use axum::debug_handler;
+
+use rand::distributions::{Alphanumeric, DistString};
 
 pub async fn get_microphone_handler(
     State(data): State<Arc<AppState>>,
@@ -150,10 +151,10 @@ pub async fn get_filter_microphone_handler(
     (headers, body).into_response()
 }
 
-pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) -> Response {
-    let mut file_count = data.file_count.lock().await;
+pub async fn handle_download(req: Request) -> Response {
+    let rand_id = Alphanumeric.sample_string(&mut rand::thread_rng(), 10);
 
-    let mut file = tokio::fs::File::create(format!("video{}.mkv", file_count))
+    let mut file = tokio::fs::File::create(format!("video-{}.mkv", rand_id))
         .await
         .unwrap();
 
@@ -166,36 +167,7 @@ pub async fn handle_download(State(data): State<Arc<AppState>>, req: Request) ->
 
     tokio::io::copy(&mut body_stream, &mut file).await.unwrap();
 
-    *file_count += 1;
-
     "".into_response()
-}
-
-#[debug_handler]
-pub async fn get_video(State(data): State<Arc<AppState>>) -> Response {
-    let mut file_count = data.file_count.lock().await;
-
-    println!("File count: {file_count}");
-
-    let file = tokio::fs::File::open(format!("video{}.mkv", file_count))
-        .await
-        .unwrap();
-
-    let stream = ReaderStream::new(file);
-
-    let body = Body::from_stream(stream);
-
-    let headers = [
-        (header::CONTENT_TYPE, "video/webm"),
-        (
-            header::CONTENT_DISPOSITION,
-            "attachment; filename=video.mkv",
-        ),
-    ];
-
-    *file_count += 1;
-
-    (headers, body).into_response()
 }
 
 pub async fn delete_data(State(data): State<Arc<AppState>>) -> Response {
